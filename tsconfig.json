@@ -1,0 +1,41 @@
+{
+	"compilerOptions": {
+		"target": "ES2021",
+		"outDir": "dist",
+
+		"paths": {
+			"@/*": [
+				"./src/*"
+			]
+		},
+
+		/* React */
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "jsx": "react-jsx",
+	
+		/* Bundler mode */
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+		"strict": true,
+		"declaration": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"useDefineForClassFields": true,
+		"pretty": true,
+		"newLine": "lf",
+	
+		/* Linting */
+        "noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noEmitOnError": true
+	},
+	"include": ["src"]
+}
