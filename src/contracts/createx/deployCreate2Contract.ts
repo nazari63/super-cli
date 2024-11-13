@@ -1,10 +1,6 @@
-import { Address, Hash, Hex, parseAbi, WalletClient } from "viem";
+import { Address, Hash, Hex, WalletClient } from "viem";
 import { estimateContractGas, simulateContract } from "viem/actions";
-import { CREATEX_ADDRESS } from "./constants.js";
-
-const deployCreate2ContractABI = parseAbi([
-    'function deployCreate2(bytes32 salt, bytes initCode) payable returns (address newContract)'
-])
+import { CREATEX_ADDRESS, createXABI } from "./constants.js";
 
 export type DeployCreate2ContractParameters = {
     client: WalletClient
@@ -20,7 +16,7 @@ export const deployCreate2Contract = async ({
     createXAddress,
 }: DeployCreate2ContractParameters): Promise<Hash> => {
     const hash = await client.writeContract({
-        abi: deployCreate2ContractABI,
+        abi: createXABI,
         chain: client.chain,
         account: client.account?.address as Address,
         address: createXAddress ?? CREATEX_ADDRESS,
@@ -38,7 +34,7 @@ export const simulateDeployCreate2Contract = async ({
     createXAddress,
 }: DeployCreate2ContractParameters): Promise<Address> => {
     const result = await simulateContract(client, {
-        abi: deployCreate2ContractABI,
+        abi: createXABI,
         account: client.account?.address as Address,
         address: createXAddress ?? CREATEX_ADDRESS,
         functionName: 'deployCreate2',
@@ -55,7 +51,7 @@ export const estimateDeployCreate2Contract = async ({
     createXAddress,
 }: DeployCreate2ContractParameters): Promise<BigInt> => {
     return await estimateContractGas(client, {
-        abi: deployCreate2ContractABI,
+        abi: createXABI,
         address: createXAddress ?? CREATEX_ADDRESS,
         functionName: 'deployCreate2',
         args: [salt, initCode]

@@ -1,16 +1,17 @@
 import { computeCreate2Address } from '../../contracts/createx/computeCreate2Address.js';
 import { getEncodedConstructorArgs } from '../../utils/abi.js';
 import { readForgeArtifact } from '../../utils/forge.js';
-import { Box, Text } from 'ink'
+import { Box, Text, Newline } from 'ink'
 import { option } from 'pastel';
 import { useEffect, useState } from 'react';
-import { concatHex, createPublicClient, createWalletClient, http, PublicClient, toHex, isHex, PrivateKeyAccount, WalletClient, Hex, Hash } from 'viem';
+import { concatHex, createPublicClient, createWalletClient, http, PublicClient, toHex, isHex, PrivateKeyAccount, WalletClient, Hex, Address } from 'viem';
 import zod from 'zod'
 import { fromError } from 'zod-validation-error';
 import { privateKeyToAccount } from 'viem/accounts';
 import { deployCreate2Contract, simulateDeployCreate2Contract } from '../../contracts/createx/deployCreate2Contract.js';
 import { getChainByID, getChainByNetworkIdentifier, initChainConfig, SupportedNetwork } from '../../utils/superchainRegistry.js';
-import { Spinner, UnorderedList, Badge } from '@inkjs/ui';
+import { Spinner, UnorderedList, Badge, Alert } from '@inkjs/ui';
+import { useDeploymentsStore, makeDeploymentPlan } from '../../stores/deployments.js';
 
 export const options = zod.object({
 	name: zod
@@ -94,36 +95,19 @@ function getDeploymentSignerClient(account: PrivateKeyAccount, chainId: number):
     return createWalletClient({ account, chain: getChainByID(chainId), transport: http() })
 }
 
-type PlanStatus = {
-    verification: 'loading' | 'success' | 'error'
-    simulation: 'loading' | 'success' | 'error'
-    execution: 'loading' | 'success' | 'error'
-}
-
 const statusBadge = {
-    loading: <Spinner />,
+    pending: <Spinner />,
     success: <Badge color="green">Done</Badge>,
+    skipped: <Badge color="yellow">Skipped</Badge>,
     error: <Badge color="red"><Text color="white" bold>Failed</Text></Badge>,
 }
 
 const DeployErc20Command = (props: Props) => {
     const { forgeArtifactPath, constructorArgs, privateKey, chains, network, salt } = props.options
-    const [deterministicAddresses, setDeterministicAddresses] = useState<string | undefined>()
-    const [initCode, setInitCode] = useState<Hex | undefined>()
 
-    const [plan, setPlan] = useState<Record<string, PlanStatus>>(chains.split(',').reduce((acc, chain) => {
-        acc[chain] = {
-            verification: 'loading',
-            simulation: 'loading',
-            execution: 'loading',
-        }
-        return acc
-    }, {} as Record<string, PlanStatus>))
-    
-    const [broadcasts, setBroadcasts] = useState<{
-        chain: string
-        hash: Hash
-    }[]>([])
+    const [deterministicAddresses, setDeterministicAddresses] = useState<Address | '0x'>('0x')
+    const { addDeployment, updateDeploymentState, updateDeploymentStepStatus, addDeploymentBroadcast } = useDeploymentsStore()
+    const deployment = useDeploymentsStore((state) => state.deployments[deterministicAddresses])
 
     try {
         options.parse(props.options)
@@ -132,8 +116,6 @@ const DeployErc20Command = (props: Props) => {
         console.log(userFriendlyErrors.toString())
         return null
     }
-
-    const parsedChains = chains.split(',').map((chain) => chain.trim())
 
     useEffect(() => {
         (async () => {
@@ -145,7 +127,6 @@ const DeployErc20Command = (props: Props) => {
             const encodedConstructorArgs = getEncodedConstructorArgs(artifact.abi, constructorArgs?.split(','))
             if (encodedConstructorArgs) {
                 initCode = concatHex([initCode, encodedConstructorArgs])
-                setInitCode(initCode)
             }
 
             const account = privateKeyToAccount(privateKey.trim() as Hex)
@@ -161,124 +142,189 @@ const DeployErc20Command = (props: Props) => {
             })
             setDeterministicAddresses(erc20Address)
 
-            for (let superchainClient of superchainClients) {
+            addDeployment({
+                deployment: makeDeploymentPlan({
+                    type: 'superchain-erc20',
+                    deterministicAddress: erc20Address,
+                    network: network as SupportedNetwork,
+                    chainIds: superchainClients.map((client) => client.chain!.id),
+                    creationParams: {
+                        initCode,
+                        salt: creationSalt32Bytes,
+                        constructorArgs: encodedConstructorArgs,
+                    },
+                }),
+            })
+
+            const skippedExecutionChains = new Set<number>()
+            for (let superchainClient of superchainClients) {                
                 const isErc20AlreadyDeployed = await superchainClient.getCode({ address: erc20Address })
 
 
-                setPlan(prev => ({
-                    ...prev,
-                    [superchainClient.chain!.name]: {
-                        verification: isErc20AlreadyDeployed ? 'error' : 'success',
-                        simulation: 'loading',
-                        execution: 'loading',
-                    }
-                }))
-
                 if (isErc20AlreadyDeployed) {
-                    throw new Error('Implementation already deployed')
+                    skippedExecutionChains.add(superchainClient.chain!.id)
                 }
 
+                updateDeploymentStepStatus({
+                    address: erc20Address,
+                    chainId: superchainClient.chain!.id,
+                    state: 'preVerification',
+                    status: isErc20AlreadyDeployed ? 'error' : 'success',
+                    message: isErc20AlreadyDeployed ? 'Contract already deployed to address' : undefined,
+                })
             }
+
+            updateDeploymentState(erc20Address, 'simulation')
 
             for (let superchainClient of superchainClients) {
                 const chainId = superchainClient.chain!.id
                 const walletClient = getDeploymentSignerClient(account, chainId)
 
-                const address = await simulateDeployCreate2Contract({
-                    client: walletClient,
-                    salt: creationSalt32Bytes,
-                    initCode: initCode,
-                })
+                let address: Address | undefined
 
-                if (address !== erc20Address) {
-                    throw new Error('Deployment address mismatch')
+                try {
+                    address = await simulateDeployCreate2Contract({
+                        client: walletClient,
+                        salt: creationSalt32Bytes,
+                        initCode: initCode,
+                    })
+
+                    updateDeploymentStepStatus({
+                        address: erc20Address,
+                        chainId: superchainClient.chain!.id,
+                        state: 'simulation',
+                        status: address !== erc20Address ? 'error' : 'success',
+                        message: address !== erc20Address ? 'Deployment address mismatch' : undefined,
+                    })
+                } catch (e) {
+                    const err = e as Error
+
+                    updateDeploymentStepStatus({
+                        address: erc20Address,
+                        chainId: superchainClient.chain!.id,
+                        state: 'simulation',
+                        status: 'error',
+                        message: err.message,
+                    })
                 }
 
-                setPlan(prev => ({
-                    ...prev,
-                    [superchainClient.chain!.name]: {
-                        ...prev[superchainClient.chain!.name] as PlanStatus,
-                        simulation: 'success',
-                    }
-                }))
+                if (address !== erc20Address) {
+                    skippedExecutionChains.add(chainId)
+                }
             }     
             
+            updateDeploymentState(erc20Address, 'execution')
+
             for (let superchainClient of superchainClients) {
+                if (skippedExecutionChains.has(superchainClient.chain!.id)) {
+                    updateDeploymentStepStatus({
+                        address: erc20Address,
+                        chainId: superchainClient.chain!.id,
+                        state: 'execution',
+                        status: 'skipped',
+                    })
+                    continue
+                }
+
                 const hash = await deployCreate2Contract({
                     client: getDeploymentSignerClient(account, superchainClient.chain!.id),
                     salt: creationSalt32Bytes,
                     initCode: initCode,
                 })
 
-                await superchainClient.waitForTransactionReceipt({ hash })
+                const receipt = await superchainClient.waitForTransactionReceipt({ hash })
 
-
-                setBroadcasts(prev => ([
-                    ...prev,
-                    {
-                        chain: superchainClient.chain!.name,
+                addDeploymentBroadcast({
+                    address: erc20Address,
+                    broadcast: {
+                        chainId: superchainClient.chain!.id,
+                        type: 'createxCreate2Deploy',
                         hash,
-                    }
-                ]))
+                        blockNumber: receipt.blockNumber,
+                    },
+                })
 
-                setPlan(prev => ({
-                    ...prev,
-                    [superchainClient.chain!.name]: {
-                        ...prev[superchainClient.chain!.name] as PlanStatus,
-                        execution: 'success',
-                    }
-                }))
+                updateDeploymentStepStatus({
+                    address: erc20Address,
+                    chainId: superchainClient.chain!.id,
+                    state: 'execution',
+                    status: receipt.status === 'success' ? 'success' : 'error',
+                })
             }
+
+            updateDeploymentState(erc20Address, 'completed')
         })()
-    }, [])
+    }, [
+        addDeployment,
+        updateDeploymentState,
+        updateDeploymentStepStatus,
+        addDeploymentBroadcast,
+        setDeterministicAddresses,
+    ])
 
     return (
-        <Box flexDirection='column' gap={1} paddingX={2}>
+        <Box flexDirection='column' gap={1} paddingTop={2} paddingX={2}>
             <Text bold>
                 Superchain ERC20 Deployment
             </Text>
 
-            {initCode && (
+            {deployment?.creationParams.initCode && (
                 <Box flexDirection='column'>
-                <Text bold>Initialization Code:</Text>
-                    <Text>{initCode}</Text>
+                    <Text bold>Initialization Code:</Text>
+                    <Alert variant="success">{deployment?.creationParams.initCode}</Alert>
                 </Box>
             )}
 
-            {deterministicAddresses && (
-                <Box flexDirection='column'>
-                <Text bold>Deterministic Address:</Text>
-                    <Text>{deterministicAddresses}</Text>
+            {deployment?.deterministicAddress && (
+                <Box flexDirection='column' width={50}>
+                    <Text bold>Deterministic Address:</Text>
+                    <Alert variant="success">{deployment?.deterministicAddress}</Alert>
                 </Box>
             )}
 
-            {parsedChains && (
+            {deployment?.chainIds && (
                 <Box flexDirection='column'>
                     <Text bold>Plan</Text>
                     <UnorderedList>
-                        {parsedChains.map((chain) => (
-                            <UnorderedList.Item key={chain}>
-                                <Text bold>{chain}</Text>
+                        {deployment?.chainIds.map((chainId) => (
+                            <UnorderedList.Item key={chainId}>
+                                <Text bold>{getChainByID(chainId)!.name}</Text>
                                 <UnorderedList>
                                     <UnorderedList.Item>
-                                        <Box flexDirection='row'>
-                                            <Text bold>Pre-Deployment Verification: </Text>
-                                            {statusBadge[plan[chain]!.verification]}
+                                    <Box flexDirection='column'>
+                                            <Box flexDirection='row'>
+                                                <Text bold>Pre-Deployment Verification: </Text>
+                                                {statusBadge[deployment!.steps[chainId]!.preVerification.status]}
+                                            </Box>
+                                            {deployment!.steps[chainId]!.preVerification.message && (
+                                                <Alert variant='error'>{deployment!.steps[chainId]!.preVerification.message}</Alert>
+                                            )}
                                         </Box>
                                     </UnorderedList.Item>
 
                                     <UnorderedList.Item>
-                                        <Box flexDirection='row'>
-                                            <Text bold>Simulation: </Text>
-                                            {statusBadge[plan[chain]!.simulation]}
+                                        <Box flexDirection='column'>
+                                            <Box flexDirection='row'>
+                                                <Text bold>Simulation: </Text>
+                                                {statusBadge[deployment!.steps[chainId]!.simulation.status]}
+                                            </Box>
+                                            {deployment!.steps[chainId]!.simulation.message && (
+                                                <Alert variant='error'>{deployment!.steps[chainId]!.simulation.message}</Alert>
+                                            )}
+                                            {deployment!.steps[chainId]!.simulation.selector && (
+                                                <Alert variant='error'>{deployment!.steps[chainId]!.simulation.selector}</Alert>
+                                            )}
                                         </Box>
                                     </UnorderedList.Item>
 
                                     <UnorderedList.Item>
                                         <Box flexDirection='row'>
                                             <Text bold>Execution: </Text>
-                                            {statusBadge[plan[chain]!.execution]}
+                                            {statusBadge[deployment!.steps[chainId]!.execution.status]}
                                         </Box>
+                                        {deployment!.steps[chainId]!.execution.message && (
+                                            <Alert variant='error'>{deployment!.steps[chainId]!.execution.message}</Alert>
+                                        )}
                                     </UnorderedList.Item>
                                 </UnorderedList>
                             </UnorderedList.Item>
@@ -287,14 +333,14 @@ const DeployErc20Command = (props: Props) => {
                 </Box>
             )}
 
-            {broadcasts.length > 0 && (
+            {!!deployment?.broadcasts.length && (
                 <Box flexDirection='column'>
                     <Text bold>Broadcasts</Text>
                     <UnorderedList>
-                        {broadcasts.map((broadcast) => (
-                            <UnorderedList.Item key={broadcast.chain}>
+                        {deployment?.broadcasts.map((broadcast) => (
+                            <UnorderedList.Item key={broadcast.chainId}>
                                 <Box flexDirection='row'>
-                                    <Text bold>{broadcast.chain}: </Text>
+                                    <Text bold>{getChainByID(broadcast.chainId)!.name}: </Text>
                                     <Text>{broadcast.hash}</Text>
                                 </Box>
                             </UnorderedList.Item>
@@ -302,6 +348,10 @@ const DeployErc20Command = (props: Props) => {
                     </UnorderedList>
                 </Box>
             )}
+
+            {deployment?.state === 'completed' && <Text bold>Deployment run completed</Text>}
+
+            <Newline />
         </Box>
     )
 }

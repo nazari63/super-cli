@@ -1,10 +1,6 @@
-import { Address, concatHex, encodePacked, Hex, keccak256, parseAbi, PublicClient, toBytes, toHex, zeroAddress } from "viem";
+import { Address, concatHex, encodePacked, Hex, keccak256, PublicClient, toBytes, toHex, zeroAddress } from "viem";
 import { readContract } from "viem/actions";
-import { CREATEX_ADDRESS, RedeployProtectionFlag } from "./constants.js";
-
-const computeCreate2AddressFunctionABI = parseAbi([
-    'function computeCreate2Address(bytes32 salt, bytes32 initCodeHash) view returns (address computedAddress)'
-])
+import { CREATEX_ADDRESS, createXABI, RedeployProtectionFlag } from "./constants.js";
 
 export type ComputeCreate2AddressParameters = {
     owner: Address
@@ -22,11 +18,11 @@ export const computeCreate2Address = async ({
     createXAddress,
 }: ComputeCreate2AddressParameters): Promise<Address> => {
     return await readContract(client, {
-        abi: computeCreate2AddressFunctionABI,
+        abi: createXABI,
         address: createXAddress ?? CREATEX_ADDRESS,
         functionName: 'computeCreate2Address',
         args: [guardedSalt(owner, client.chain?.id as number, salt), keccak256(initCode)]
-    })
+    }) as Address
 }
 
 export function createPermissionedSalt(owner: Address, salt: Hex, protectionFlag: RedeployProtectionFlag) {
