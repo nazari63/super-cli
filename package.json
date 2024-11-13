@@ -22,7 +22,8 @@
 		"react": "^18.2.0",
 		"viem": "^2.21.41",
 		"zod": "^3.21.4",
-		"zod-validation-error": "^3.4.0"
+		"zod-validation-error": "^3.4.0",
+		"zustand": "^5.0.1"
 	},
 	"devDependencies": {
 		"@types/react": "^18.0.32",
