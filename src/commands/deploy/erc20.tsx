@@ -1,6 +1,6 @@
-import { computeCreate2Address } from '../../contracts/createx/computeCreate2Address.js';
-import { getEncodedConstructorArgs } from '../../utils/abi.js';
-import { readForgeArtifact } from '../../utils/forge.js';
+import { computeCreate2Address } from '@/contracts/createx/computeCreate2Address';
+import { getEncodedConstructorArgs } from '@/utils/abi';
+import { readForgeArtifact } from '@/utils/forge';
 import { Box, Text, Newline } from 'ink'
 import { option } from 'pastel';
 import { useEffect, useState } from 'react';
@@ -8,10 +8,10 @@ import { concatHex, createPublicClient, createWalletClient, http, PublicClient, 
 import zod from 'zod'
 import { fromError } from 'zod-validation-error';
 import { privateKeyToAccount } from 'viem/accounts';
-import { deployCreate2Contract, simulateDeployCreate2Contract } from '../../contracts/createx/deployCreate2Contract.js';
-import { getChainByID, getChainByNetworkIdentifier, initChainConfig, SupportedNetwork } from '../../utils/superchainRegistry.js';
+import { deployCreate2Contract, simulateDeployCreate2Contract } from '@/contracts/createx/deployCreate2Contract';
+import { getChainByID, getChainByNetworkIdentifier, initChainConfig, SupportedNetwork } from '@/utils/superchainRegistry';
 import { Spinner, UnorderedList, Badge, Alert } from '@inkjs/ui';
-import { useDeploymentsStore, makeDeploymentPlan } from '../../stores/deployments.js';
+import { useDeploymentsStore, makeDeploymentPlan } from '@/stores/deployments';
 
 export const options = zod.object({
 	name: zod
