@@ -5,7 +5,8 @@
 
 		"paths": {
 			"@/*": [
-				"./src/*"
+				"./src/*",
+				"./toml-parser/pkg/*"
 			]
 		},
 
@@ -37,5 +38,5 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"noEmitOnError": true
 	},
-	"include": ["src"]
+	"include": ["src", "toml-parser/pkg"]
 }
