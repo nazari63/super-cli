@@ -1,11 +1,17 @@
 {
   "name": "toml-parser",
+  "type": "module",
   "version": "0.1.0",
   "files": [
     "toml_parser_bg.wasm",
     "toml_parser.js",
+    "toml_parser_bg.js",
     "toml_parser.d.ts"
   ],
   "main": "toml_parser.js",
-  "types": "toml_parser.d.ts"
+  "types": "toml_parser.d.ts",
+  "sideEffects": [
+    "./toml_parser.js",
+    "./snippets/*"
+  ]
 }
