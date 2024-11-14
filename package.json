@@ -9,7 +9,7 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "tsc --watch"
+		"dev": "tsx src/cli.tsx"
 	},
 	"files": [
 		"dist"
@@ -37,6 +37,7 @@
 		"prettier": "^2.8.7",
 		"resolve-tspaths": "^0.8.22",
 		"ts-node": "^10.9.1",
+		"tsx": "^4.19.2",
 		"typescript": "^5.0.3"
 	},
 	"prettier": "@vdemedes/prettier-config"
