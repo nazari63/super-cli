@@ -5,8 +5,7 @@
 
 		"paths": {
 			"@/*": [
-				"./src/*",
-				"./toml-parser/pkg/*"
+				"./src/*"
 			]
 		},
 
@@ -38,5 +37,14 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"noEmitOnError": true
 	},
-	"include": ["src", "toml-parser/pkg"]
+	"include": ["src"]
 }
+
+pnpm nx run cli:dev deploy erc20 \
+--name SUPER \
+--forge-artifact-path ../superchainerc20-starter/packages/contracts/out/L2NativeSuperchainERC20.sol/L2NativeSuperchainERC20.json \
+--constructor-args SUPER,SUP,18 \
+--salt EthersPhoenix \
+--chains op,base \
+--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \—
+--network sepolia
