@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 
-use toml;
 use serde_json;
+use toml;
 
 type TomlContent = HashMap<String, toml::value::Value>;
 
@@ -22,5 +22,28 @@ pub fn parse_toml(toml_str: String) -> Result<String> {
             let err = napi::Error::new(napi::Status::InvalidArg, &e.to_string());
             Err(err)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_parse_toml() {
+        let toml_str = r#"
+            [testcli]
+            test_key = "test"
+
+            [testcli.test_nested]
+            test_arr = [1, 2, 3]
+        "#
+        .to_string();
+        let result = parse_toml(toml_str);
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(
+            result.unwrap(),
+            r#"{"testcli":{"test_key":"test","test_nested":{"test_arr":[1,2,3]}}}"#
+        );
     }
 }

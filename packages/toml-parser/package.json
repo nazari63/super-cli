@@ -4,7 +4,10 @@
     "main": "./index.node",
     "version": "0.0.1",
     "scripts": {
-        "build": "napi build --release"
+        "build": "napi build --release",
+        "test": "cargo test",
+        "lint": "cargo fmt --check",
+        "lint:fix": "cargo fmt && cargo fmt --check"
     },
     "dependencies": {
         "@napi-rs/cli": "^2.18.4"
