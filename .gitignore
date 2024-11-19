@@ -8,6 +8,7 @@ packages/*/.env
 /coverage
 
 # build artifacts
+**/target/
 **/build/
 **/dist/
 **/tsconfig.tsbuildinfo

@@ -1,0 +1,12 @@
+{
+    "name": "toml-parser",
+    "type": "module",
+    "main": "./index.node",
+    "version": "0.0.1",
+    "scripts": {
+        "build": "napi build --release"
+    },
+    "dependencies": {
+        "@napi-rs/cli": "^2.18.4"
+    }
+}
