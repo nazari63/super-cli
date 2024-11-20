@@ -6,7 +6,8 @@
         "build": "napi build --release",
         "test": "cargo test",
         "lint": "cargo fmt --check",
-        "lint:fix": "cargo fmt && cargo fmt --check"
+        "lint:fix": "cargo fmt && cargo fmt --check",
+        "typecheck": "cargo check"
     },
     "dependencies": {
         "@napi-rs/cli": "^2.18.4"
