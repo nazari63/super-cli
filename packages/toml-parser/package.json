@@ -1,8 +1,7 @@
 {
     "name": "toml-parser",
-    "type": "module",
-    "main": "./index.node",
     "version": "0.0.1",
+    "main": "./index.js",
     "scripts": {
         "build": "napi build --release",
         "test": "cargo test",
