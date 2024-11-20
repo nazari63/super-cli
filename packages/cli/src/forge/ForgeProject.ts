@@ -1,5 +1,4 @@
-import {ForgeArtifact} from '@/utils/forge';
-import {readForgeArtifact} from '@/utils/forge';
+import {ForgeArtifact, readForgeArtifact} from '@/forge/readForgeArtifact';
 import fs from 'fs/promises';
 import path from 'path';
 
