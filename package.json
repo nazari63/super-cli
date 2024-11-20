@@ -1,6 +1,7 @@
 {
    "name": "super",
    "private": true,
+   "packageManager": "pnpm@9.0.2",
    "nx": {},
    "dependencies": {
       "nx": "^20.1.2"
