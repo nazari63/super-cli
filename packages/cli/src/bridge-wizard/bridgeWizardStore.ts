@@ -1,82 +1,62 @@
-import {create} from 'zustand';
-import {BridgeWizardStep} from './bridgeWizardSteps';
-import {Address, Hex} from 'viem';
+import {defineWizard, InferStepId} from '@/wizard-builder/defineWizard';
+import {z} from 'zod';
+import {formatEther} from 'viem';
+import {Address as ZodAddress} from 'abitype/zod';
+import {
+	createWizardStore,
+	WizardPossibleStates,
+} from '@/wizard-builder/createWizardStore';
 
-export type BridgeWizardStore = {
-	state: BridgeWizardStep;
-
-	// Actions
-	selectNetwork: (network: string) => void;
-	setPrivateKey: (privateKey: Hex, address: Address) => void;
-	selectChains: (chainIds: number[]) => void;
-	setAmount: (amount: bigint) => void;
-};
-
-const initialState = {
-	step: 'select-network',
-} as const;
-
-export const useBridgeWizardStore = create<BridgeWizardStore>(set => ({
-	state: initialState,
-
-	selectNetwork: (network: string) =>
-		set(store => {
-			if (store.state.step !== 'select-network') {
-				throw new Error('Cannot select network in current step');
-			}
-
-			return {
-				state: {
-					...store.state,
-					step: 'enter-private-key',
-					network,
-				},
-			};
+const bridgeWizard = defineWizard()
+	.addStep({
+		id: 'select-network',
+		schema: z.object({
+			network: z.string(),
 		}),
-
-	setPrivateKey: (privateKey: Hex, address: Address) =>
-		set(store => {
-			if (store.state.step !== 'enter-private-key') {
-				throw new Error('Cannot set private key in current step');
-			}
-
-			return {
-				state: {
-					...store.state,
-					step: 'select-chains',
-					privateKey,
-					address,
-				},
-			};
+		title: 'Select Network',
+		getSummary: state => `${state.network}`,
+	})
+	.addStep({
+		id: 'enter-private-key',
+		schema: z.object({
+			privateKey: z.string(),
+			address: ZodAddress,
 		}),
-
-	selectChains: (chainIds: number[]) =>
-		set(store => {
-			if (store.state.step !== 'select-chains') {
-				throw new Error('Cannot select chains in current step');
-			}
-
-			return {
-				state: {
-					...store.state,
-					step: 'enter-amount',
-					chainIds,
-				},
-			};
+		title: 'Enter Private Key',
+		getSummary: state => `${state.address}`,
+	})
+	.addStep({
+		id: 'select-chains',
+		schema: z.object({
+			chainIds: z.array(z.number()),
 		}),
-
-	setAmount: (amount: bigint) =>
-		set(store => {
-			if (store.state.step !== 'enter-amount') {
-				throw new Error('Cannot set amount in current step');
-			}
-
-			return {
-				state: {
-					...store.state,
-					step: 'confirm-transaction',
-					amount,
-				},
-			};
+		title: 'Select Chains',
+		getSummary: state => `${state.chainIds.join(', ')}`,
+	})
+	.addStep({
+		id: 'enter-amount',
+		schema: z.object({
+			amount: z.bigint(),
 		}),
-}));
+		title: 'Enter Amount',
+		getSummary: state => {
+			const perChainAmount = Number(formatEther(state.amount)).toFixed(2);
+			const totalAmount = Number(
+				formatEther(state.amount * BigInt(state.chainIds.length)),
+			).toFixed(2);
+			return `${perChainAmount} ETH × ${state.chainIds.length} chains = ${totalAmount} ETH total`;
+		},
+	})
+	.build();
+
+export const bridgeWizardIndexByStepId = bridgeWizard.reduce(
+	(acc, step, index) => {
+		acc[step.id] = index;
+		return acc;
+	},
+	{} as Record<BridgeWizardStepId, number>,
+);
+
+export type BridgeWizardStepId = InferStepId<typeof bridgeWizard>;
+
+export const useBridgeWizardStore = createWizardStore(bridgeWizard);
