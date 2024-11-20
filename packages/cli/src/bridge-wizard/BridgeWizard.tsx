@@ -1,62 +1,110 @@
 import {
-	BridgeWizardStateVariables,
-	BridgeWizardStep,
-	bridgeWizardStepMetadatas,
-	indexByBridgeWizardStep,
-} from '@/bridge-wizard/bridgeWizardSteps';
-import {useBridgeWizardStore} from '@/bridge-wizard/bridgeWizardStore';
+	bridgeWizardIndexByStepId,
+	BridgeWizardStepId,
+	useBridgeWizardStore,
+} from '@/bridge-wizard/bridgeWizardStore';
 import {EnterAmount} from '@/bridge-wizard/EnterAmount';
 import {EnterPrivateKey} from '@/bridge-wizard/EnterPrivateKey';
 import {SelectChains} from '@/bridge-wizard/SelectChains';
 import {SelectNetwork} from '@/bridge-wizard/SelectNetwork';
 import {Box, Text} from 'ink';
 
-const WizardProgress = ({state}: {state: BridgeWizardStep}) => {
-	const currentIndex = indexByBridgeWizardStep[state.step];
+type StepStatus = 'done' | 'current' | 'upcoming';
+
+type StepProgress = {
+	status: StepStatus;
+	title: string;
+	summary?: string;
+};
+
+const useStepProgress = ({
+	stepId,
+}: {
+	stepId: BridgeWizardStepId;
+}): StepProgress => {
+	const {steps, wizardState} = useBridgeWizardStore();
+
+	const currentIndex = bridgeWizardIndexByStepId[wizardState.stepId];
+	const stepIndex = bridgeWizardIndexByStepId[stepId];
+
+	const step = steps[stepIndex]!;
+
+	if (stepIndex < currentIndex) {
+		return {
+			status: 'done' as const,
+			title: step.title,
+			summary: step.getSummary
+				? step.getSummary(wizardState as unknown as any)
+				: undefined,
+		};
+	}
+
+	if (stepIndex === currentIndex) {
+		return {
+			status: 'current' as const,
+			title: step.title,
+		};
+	}
+
+	return {
+		status: 'upcoming' as const,
+		title: step.title,
+	};
+};
+
+const WizardProgressForStep = ({stepId}: {stepId: BridgeWizardStepId}) => {
+	const {status, title, summary} = useStepProgress({stepId});
 
 	return (
-		<Box flexDirection="column">
-			{bridgeWizardStepMetadatas.map(({step, title, getSummary}, index) => {
-				const isPast = index < currentIndex;
-				const isCurrent = index === currentIndex;
+		<Box gap={1} paddingX={1}>
+			<Text
+				color={
+					status === 'done' ? 'green' : status === 'current' ? 'blue' : 'gray'
+				}
+			>
+				{status === 'done' ? '✓' : status === 'current' ? '>' : '○'}
+			</Text>
+			<Text color={status === 'current' ? 'blue' : 'white'}> {title}</Text>
+			{status === 'done' && summary && <Text color="yellow">{summary}</Text>}
+		</Box>
+	);
+};
 
-				return (
-					<Box key={step} gap={1} paddingX={1}>
-						<Text color={isPast ? 'green' : isCurrent ? 'blue' : 'gray'}>
-							{isPast ? '✓' : isCurrent ? '>' : '○'}
-						</Text>
-						<Text color={isCurrent ? 'blue' : 'white'}> {title}</Text>
-						{isPast && (
-							<Text color="yellow">
-								{getSummary(state as unknown as BridgeWizardStateVariables)}
-							</Text>
-						)}
-					</Box>
-				);
+const WizardProgress = () => {
+	const {steps, wizardState} = useBridgeWizardStore();
+	if (wizardState.stepId === 'completed') {
+		return (
+			<Box>
+				<Text>Completed</Text>
+			</Box>
+		);
+	}
+	return (
+		<Box flexDirection="column">
+			{steps.map(({id}) => {
+				return <WizardProgressForStep stepId={id} key={id} />;
 			})}
 		</Box>
 	);
 };
 
-export const BridgeWizard = ({
-	onSubmit,
-}: {
-	onSubmit: (form: BridgeWizardStateVariables) => void;
-}) => {
-	const {state} = useBridgeWizardStore();
+export const BridgeWizard = () => {
+	const {wizardState} = useBridgeWizardStore();
+
+	const stepId = wizardState.stepId;
 
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Text bold color="blue">
 				🌉 Bridge Wizard
 			</Text>
-			<WizardProgress state={state} />
+			<WizardProgress />
 
 			<Box flexDirection="column">
-				{state.step === 'select-network' && <SelectNetwork />}
-				{state.step === 'enter-private-key' && <EnterPrivateKey />}
-				{state.step === 'select-chains' && <SelectChains />}
-				{state.step === 'enter-amount' && <EnterAmount />}
+				{stepId === 'select-network' && <SelectNetwork />}
+				{stepId === 'enter-private-key' && <EnterPrivateKey />}
+				{stepId === 'select-chains' && <SelectChains />}
+				{stepId === 'enter-amount' && <EnterAmount />}
 			</Box>
 		</Box>
 	);

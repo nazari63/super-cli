@@ -37,18 +37,18 @@ const supportedAmounts: bigint[] = [
 ];
 
 export const EnterAmount = () => {
-	const {state, setAmount} = useBridgeWizardStore();
+	const {wizardState, submitEnterAmount} = useBridgeWizardStore();
 
-	if (state.step !== 'enter-amount') {
+	if (wizardState.stepId !== 'enter-amount') {
 		throw new Error('Invalid state');
 	}
 
 	const {data: balance, isLoading: isLoadingBalance} = useBalance(
-		state.network,
-		state.address,
+		wizardState.network,
+		wizardState.address,
 	);
 
-	const numChains = state.chainIds.length;
+	const numChains = wizardState.chainIds.length;
 
 	return (
 		<Box flexDirection="column" gap={1}>
@@ -58,7 +58,7 @@ export const EnterAmount = () => {
 			</Text>
 
 			<Box paddingLeft={2}>
-				<Text dimColor>Balance on {state.network}: </Text>
+				<Text dimColor>Balance on {wizardState.network}: </Text>
 				{isLoadingBalance ? (
 					<Spinner />
 				) : balance ? (
@@ -84,7 +84,9 @@ export const EnterAmount = () => {
 							value: amount.toString(),
 						};
 					})}
-					onChange={amount => setAmount(BigInt(amount))}
+					onChange={amount => {
+						submitEnterAmount({amount: BigInt(amount)});
+					}}
 				/>
 			</Box>
 		</Box>

@@ -1,0 +1,38 @@
+import {createWizardStore} from '@/wizard-builder/createWizardStore';
+import {defineWizard} from '@/wizard-builder/defineWizard';
+import {z} from 'zod';
+
+const bridgeWizard = defineWizard()
+	.addStep({
+		id: 'selectNetwork',
+		schema: z.object({
+			network: z.string(),
+		}),
+		title: 'Select Network',
+		getSummary: state => `${state.network}`,
+	})
+	.addStep({
+		id: 'selectChains',
+		schema: z.object({
+			chainIds: z.array(z.number()),
+		}),
+		title: 'Select Chains',
+		getSummary: state => `${state.chainIds.join(', ')}`,
+	})
+	.addStep({
+		id: 'enterAmount',
+		schema: z.object({
+			amount: z.bigint(),
+		}),
+		title: 'Enter Amount',
+		getSummary: state => {
+			return `Amount: ${state.amount}`;
+		},
+	})
+	.build();
+
+type BridgeWizardType = typeof bridgeWizard;
+
+export const store = createWizardStore(bridgeWizard);
+
+const currentState = store.getState();

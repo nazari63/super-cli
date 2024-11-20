@@ -1,14 +1,14 @@
-import {SupportedNetwork} from '@/utils/superchainRegistry';
 import {useBridgeWizardStore} from '@/bridge-wizard/bridgeWizardStore';
+import {SupportedNetwork} from '@/utils/superchainRegistry';
 import {Select} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 
 const supportedNetworks: SupportedNetwork[] = ['mainnet', 'sepolia'];
 
 export const SelectNetwork = () => {
-	const {state, selectNetwork} = useBridgeWizardStore();
+	const {wizardState, submitSelectNetwork} = useBridgeWizardStore();
 
-	if (state.step !== 'select-network') {
+	if (wizardState.stepId !== 'select-network') {
 		throw new Error('Invalid state');
 	}
 
@@ -20,7 +20,7 @@ export const SelectNetwork = () => {
 					label: network,
 					value: network,
 				}))}
-				onChange={selectNetwork}
+				onChange={value => submitSelectNetwork({network: value})}
 			/>
 		</Box>
 	);

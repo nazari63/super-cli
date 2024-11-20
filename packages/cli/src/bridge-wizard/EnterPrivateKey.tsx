@@ -6,14 +6,14 @@ import {useState} from 'react';
 import {Account, isHex} from 'viem';
 
 export const EnterPrivateKey = () => {
-	const {state, setPrivateKey} = useBridgeWizardStore();
+	const {wizardState, submitEnterPrivateKey} = useBridgeWizardStore();
+
+	if (wizardState.stepId !== 'enter-private-key') {
+		throw new Error('Invalid state');
+	}
 
 	const [errorMessage, setErrorMessage] = useState<string>('');
 	const [resetKey, setResetKey] = useState(0);
-
-	if (state.step !== 'enter-private-key') {
-		throw new Error('Invalid state');
-	}
 
 	return (
 		<Box flexDirection="column">
@@ -42,7 +42,10 @@ export const EnterPrivateKey = () => {
 						return;
 					}
 
-					setPrivateKey(privateKey, account.address);
+					submitEnterPrivateKey({
+						privateKey,
+						address: account.address,
+					});
 				}}
 			/>
 			{errorMessage && (

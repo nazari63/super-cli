@@ -17,9 +17,9 @@ const getBalanceForChain = (chainListItem: ChainListItem, address: Address) => {
 };
 
 export const SelectChains = () => {
-	const {state, selectChains} = useBridgeWizardStore();
+	const {wizardState, submitSelectChains} = useBridgeWizardStore();
 
-	if (state.step !== 'select-chains') {
+	if (wizardState.stepId !== 'select-chains') {
 		throw new Error('Invalid state');
 	}
 
@@ -41,20 +41,23 @@ export const SelectChains = () => {
 		isLoading: isLoadingBalances,
 		error: loadBalancesError,
 	} = useQuery({
-		queryKey: ['balance', 'l2', state.network!, state.address!],
+		queryKey: ['balance', 'l2', wizardState.network, wizardState.address],
 		queryFn: async () => {
 			const chainsInNetwork = chains!.filter(
-				chain => chain.parent.chain === state.network,
+				chain => chain.parent.chain === wizardState.network,
 			);
 			const balances = await Promise.all(
-				chainsInNetwork.map(chain => getBalanceForChain(chain, state.address!)),
+				chainsInNetwork.map(chain =>
+					getBalanceForChain(chain, wizardState.address),
+				),
 			);
 
 			return Object.fromEntries(
 				chainsInNetwork.map((chain, index) => [chain.chainId, balances[index]]),
 			);
 		},
-		enabled: Boolean(chains) && chains!.length > 0 && Boolean(state.address),
+		enabled:
+			Boolean(chains) && chains!.length > 0 && Boolean(wizardState.address),
 		staleTime: Infinity,
 	});
 
@@ -64,7 +67,7 @@ export const SelectChains = () => {
 		return (
 			<Box flexDirection="column">
 				<Spinner
-					label={`Loading chains from superchain registry for ${state.network}...`}
+					label={`Loading chains from superchain registry for ${wizardState.network}...`}
 				/>
 			</Box>
 		);
@@ -108,7 +111,7 @@ export const SelectChains = () => {
 			</Text>
 			<MultiSelect
 				options={chains
-					.filter(chain => chain.parent.chain === state.network)
+					.filter(chain => chain.parent.chain === wizardState.network)
 					.map(chain => ({
 						label:
 							isLoadingBalances || loadBalancesError
@@ -123,8 +126,9 @@ export const SelectChains = () => {
 						setErrorMessage('You must select at least one chain');
 						return;
 					}
-
-					selectChains(chainIdStrs.map(Number));
+					submitSelectChains({
+						chainIds: chainIdStrs.map(Number),
+					});
 				}}
 			/>
 			{errorMessage && <Text color="red">{errorMessage}</Text>}
