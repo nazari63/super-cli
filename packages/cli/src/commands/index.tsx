@@ -1,7 +1,7 @@
-import {Wizard} from '@/wizard/Wizard';
+import {DeployCreate2Wizard} from '@/deploy-create2-wizard/DeployCreate2Wizard';
 
 const Index = () => {
-	return <Wizard onSubmit={form => console.log(form)} />;
+	return <DeployCreate2Wizard />;
 };
 
 export default Index;

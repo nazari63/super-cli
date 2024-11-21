@@ -68,14 +68,9 @@ export const AbiItemInput = <T extends AbiParameter>({
 	};
 
 	return (
-		<Box flexDirection="column" gap={1}>
+		<Box flexDirection="column">
 			<Text color="red">{error ? `❌ ${error}` : ' '}</Text>
-
-			<TextInput
-				key={`${attemptCount}`}
-				onSubmit={handleSubmit}
-				placeholder="Type value and press Enter"
-			/>
+			<TextInput key={`${attemptCount}`} onSubmit={handleSubmit} />
 		</Box>
 	);
 };
@@ -92,14 +87,14 @@ export const AbiItemForm = <T extends AbiConstructor | AbiFunction>({
 	const [currentIndex, setCurrentIndex] = useState(0);
 
 	return (
-		<Box flexDirection="column" padding={1}>
+		<Box flexDirection="column">
 			<Box marginBottom={1}>
 				<Text bold color="blue">
 					📝 Enter function arguments
 				</Text>
 			</Box>
 
-			<Box flexDirection="column" marginBottom={1}>
+			<Box flexDirection="column">
 				{inputs.map((input, index) => (
 					<Box key={index}>
 						<Text>
@@ -109,7 +104,7 @@ export const AbiItemForm = <T extends AbiConstructor | AbiFunction>({
 							{values[index] ? (
 								<Text color="cyan"> = {values[index]}</Text>
 							) : (
-								<Text dimColor> (not set)</Text>
+								<Text dimColor> ⋯</Text>
 							)}
 							{currentIndex > index && <Text color="green"> ✓</Text>}
 						</Text>
@@ -117,7 +112,7 @@ export const AbiItemForm = <T extends AbiConstructor | AbiFunction>({
 				))}
 			</Box>
 
-			<Box marginBottom={1}>
+			<Box marginTop={1}>
 				<Text dimColor>Enter value for </Text>
 				<Text bold color="yellow">
 					{inputs[currentIndex]?.name || 'unnamed'}

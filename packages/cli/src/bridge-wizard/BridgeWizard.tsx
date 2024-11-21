@@ -7,6 +7,7 @@ import {EnterAmount} from '@/bridge-wizard/EnterAmount';
 import {EnterPrivateKey} from '@/bridge-wizard/EnterPrivateKey';
 import {SelectChains} from '@/bridge-wizard/SelectChains';
 import {SelectNetwork} from '@/bridge-wizard/SelectNetwork';
+import DeployCreate2Command from '@/commands/deploy/create2';
 import {Box, Text} from 'ink';
 
 type StepStatus = 'done' | 'current' | 'upcoming';

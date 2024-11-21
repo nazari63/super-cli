@@ -1,13 +1,12 @@
+import {useDeployCreate2WizardStore} from '@/deploy-create2-wizard/deployCreate2WizardStore';
 import {initChainConfig} from '@/utils/superchainRegistry';
-import {InvalidWizardStep} from '@/wizard/InvalidWizardStep';
-import {useWizardStore} from '@/wizard/wizardStore';
 import {MultiSelect, Spinner} from '@inkjs/ui';
 import {useQuery} from '@tanstack/react-query';
 import {Box, Text} from 'ink';
 import {useState} from 'react';
 
 export const SelectChains = () => {
-	const {state, selectChains} = useWizardStore();
+	const {wizardState, submitSelectChains} = useDeployCreate2WizardStore();
 
 	const {
 		data: chains,
@@ -22,8 +21,8 @@ export const SelectChains = () => {
 
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	if (state.step !== 'select-chains') {
-		return <InvalidWizardStep />;
+	if (wizardState.stepId !== 'select-chains') {
+		throw new Error('Invalid step');
 	}
 
 	if (isLoading) {
@@ -54,7 +53,7 @@ export const SelectChains = () => {
 	}
 
 	return (
-		<Box flexDirection="column" gap={1} paddingX={1}>
+		<Box flexDirection="column">
 			<Text>
 				<Text color="cyan">Select chains to deploy to</Text>
 				<Text color="gray"> (</Text>
@@ -69,18 +68,18 @@ export const SelectChains = () => {
 			</Text>
 			<MultiSelect
 				options={chains
-					.filter(chain => chain.parent.chain === state.network)
+					.filter(chain => chain.parent.chain === wizardState.network)
 					.map(chain => ({
 						label: chain.name,
-						value: chain.chainId.toString(),
+						value: chain.identifier.split('/')[1]!,
 					}))}
-				onSubmit={chainIdStrs => {
-					if (chainIdStrs.length === 0) {
+				onSubmit={chainNames => {
+					if (chainNames.length === 0) {
 						setErrorMessage('You must select at least one chain');
 						return;
 					}
 
-					selectChains(chainIdStrs.map(Number));
+					submitSelectChains({chainNames});
 				}}
 			/>
 			{errorMessage && <Text color="red">{errorMessage}</Text>}
