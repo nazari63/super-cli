@@ -41,8 +41,19 @@ jobs:
           name: Unit Tests
           command: pnpm nx affected --base=$NX_BASE --head=$NX_HEAD --target=test
 
+  typecheck:
+    executor:
+      name: node/default
+      tag: '22.10'
+    steps:
+      - setup
+      - run:
+          name: Typecheck
+          command: pnpm nx affected --base=$NX_BASE --head=$NX_HEAD --target=typecheck
+
 workflows:
   main:
     jobs:
       - lint
       - test
+      - typecheck
