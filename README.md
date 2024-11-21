@@ -1,5 +1,7 @@
 # super-cli
 
+**WIP** This is a work in progress it is not ready to be consumed!
+
 ## Local Development Setup
 
 **Install Rust**
