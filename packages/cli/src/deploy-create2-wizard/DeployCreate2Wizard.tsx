@@ -11,7 +11,7 @@ import {ConfigureSalt} from '@/deploy-create2-wizard/ConfigureSalt';
 import {SelectNetwork} from '@/deploy-create2-wizard/SelectNetwork';
 import {SelectChains} from '@/deploy-create2-wizard/SelectChains';
 import {EnterPrivateKey} from '@/deploy-create2-wizard/EnterPrivateKey';
-import DeployCreate2Command from '@/commands/deploy/create2';
+import {DeployCreate2Command} from '@/commands/deploy/create2';
 import {getArtifactPathForContract} from '@/forge/foundryProject';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
@@ -90,9 +90,11 @@ const WizardProgress = () => {
 	}
 	return (
 		<Box flexDirection="column">
-			{steps.map(({id}) => {
-				return <WizardProgressForStep stepId={id} key={id} />;
-			})}
+			{steps
+				.filter(({id}) => id !== 'completed')
+				.map(({id}) => {
+					return <WizardProgressForStep stepId={id} key={id} />;
+				})}
 		</Box>
 	);
 };

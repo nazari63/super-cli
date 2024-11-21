@@ -1,7 +1,7 @@
 import {Box, Text, Newline} from 'ink';
 import {useEffect} from 'react';
 
-import {Spinner, UnorderedList, Badge, Alert} from '@inkjs/ui';
+import {Spinner, UnorderedList, Badge, Alert, StatusMessage} from '@inkjs/ui';
 import {useDeploymentsStore} from '@/stores/deployments';
 import {
 	deployCreateXCreate2,
@@ -11,6 +11,10 @@ import {
 } from '@/actions/deployCreateXCreate2';
 import {useQuery} from '@tanstack/react-query';
 import {useMappingChainById} from '@/queries/chainById';
+import {z} from 'zod';
+import {option} from 'pastel';
+import {DeployCreate2Wizard} from '@/deploy-create2-wizard/DeployCreate2Wizard';
+import {fromZodError} from 'zod-validation-error';
 
 const statusBadge = {
 	pending: <Spinner />,
@@ -25,14 +29,52 @@ const statusBadge = {
 	),
 };
 
-const useDeterministicAddress = (params: DeployCreateXCreate2Params) => {
-	return useQuery({
-		// TODO check this query key is consistent
-		queryKey: ['deterministicAddress', params],
-		queryFn: async () => {
-			return deployCreateXCreate2ComputeAddress(params);
-		},
-	});
+const zodDeployCreate2CommandEntrypointOptions = zodDeployCreateXCreate2Params
+	.partial()
+	.merge(
+		z.object({
+			interactive: z
+				.boolean()
+				.optional()
+				.default(false)
+				.describe(
+					option({
+						description: 'Interactive mode',
+						alias: 'i',
+					}),
+				),
+		}),
+	);
+
+type EntrypointOptions = z.infer<
+	typeof zodDeployCreate2CommandEntrypointOptions
+>;
+
+const DeployCreate2CommandEntrypoint = ({
+	options,
+}: {
+	options: EntrypointOptions;
+}) => {
+	if (options.interactive === true) {
+		return <DeployCreate2Wizard />;
+	}
+
+	// If non-interactive, all fields must be there
+	const parseResult = zodDeployCreateXCreate2Params.safeParse(options);
+	if (parseResult.success == false) {
+		return (
+			<StatusMessage variant="error">
+				{
+					fromZodError(parseResult.error, {
+						maxIssuesInMessage: 1,
+						prefix: '',
+						prefixSeparator: '',
+					}).message
+				}
+			</StatusMessage>
+		);
+	}
+	return <DeployCreate2Command options={parseResult.data} />;
 };
 
 const DeployCreate2Command = ({
@@ -171,5 +213,16 @@ const DeployCreate2Command = ({
 	);
 };
 
-export default DeployCreate2Command;
-export const options = zodDeployCreateXCreate2Params;
+const useDeterministicAddress = (params: DeployCreateXCreate2Params) => {
+	return useQuery({
+		// TODO check this query key is consistent
+		queryKey: ['deterministicAddress', params],
+		queryFn: async () => {
+			return deployCreateXCreate2ComputeAddress(params);
+		},
+	});
+};
+
+export default DeployCreate2CommandEntrypoint;
+export {DeployCreate2Command};
+export const options = zodDeployCreate2CommandEntrypointOptions;
