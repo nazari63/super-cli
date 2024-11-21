@@ -14,13 +14,13 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 nvm install
 ```
 
-***Instal pnpm**
+**Instal pnpm**
 ```bash
 corepack enable pnpm
 corepack use pnpm@9.0.2
 ```
 
-***Install Dependencies & Build**
+**Install Dependencies & Build**
 ```bash
 pnpm i
 pnpm nx run-many -t build
