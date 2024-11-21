@@ -21,6 +21,7 @@ export type WizardPossibleStates<Steps extends WizardStep<any, any>[]> = {
 export type DefineStoreType<Steps extends WizardStep<any, any, string>[]> = {
 	wizardState: WizardPossibleStates<Steps>;
 	steps: Steps;
+	setWizardState: (state: WizardPossibleStates<Steps>) => void;
 } & {
 	[Step in Steps[number] as `submit${CapitalizeWords<Step['id']>}`]: (
 		value: InferFieldsAtStep<Steps, Step['id']>,
@@ -77,6 +78,9 @@ export function createWizardStore<Steps extends WizardStep<any, any, any>[]>(
 		return {
 			wizardState: initialState,
 			steps: wizard,
+			setWizardState: (state: WizardPossibleStates<WizardType>) => {
+				set({wizardState: state} as StoreType);
+			},
 			...submitFunctions,
 		} as StoreType;
 	});

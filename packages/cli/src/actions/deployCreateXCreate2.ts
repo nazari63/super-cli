@@ -43,16 +43,6 @@ export const zodDeployCreateXCreate2Params = z.object({
 		)
 		.min(4)
 		.optional(),
-	initArgs: z
-		.string()
-		.describe(
-			option({
-				description: 'Arguments to initialize the ERC20 contract',
-				alias: 'iargs',
-			}),
-		)
-		.min(4)
-		.optional(),
 	salt: z.string().describe(
 		option({
 			description: 'Salt',
@@ -95,6 +85,7 @@ const createDeployContext = async ({
 	constructorArgs,
 }: DeployCreateXCreate2Params) => {
 	const chainByIdentifier = await queryMappingChainByIdentifier();
+
 	const artifact = await queryForgeArtifact(forgeArtifactPath);
 
 	const chainIdentifiers = chains.map(chain => `${network}/${chain}`);

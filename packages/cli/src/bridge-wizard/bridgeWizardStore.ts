@@ -2,10 +2,7 @@ import {defineWizard, InferStepId} from '@/wizard-builder/defineWizard';
 import {z} from 'zod';
 import {formatEther} from 'viem';
 import {Address as ZodAddress} from 'abitype/zod';
-import {
-	createWizardStore,
-	WizardPossibleStates,
-} from '@/wizard-builder/createWizardStore';
+import {createWizardStore} from '@/wizard-builder/createWizardStore';
 
 const bridgeWizard = defineWizard()
 	.addStep({

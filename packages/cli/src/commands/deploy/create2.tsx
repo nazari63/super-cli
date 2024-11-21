@@ -35,7 +35,7 @@ const useDeterministicAddress = (params: DeployCreateXCreate2Params) => {
 	});
 };
 
-const DeployErc20Command = ({
+const DeployCreate2Command = ({
 	options,
 }: {
 	options: DeployCreateXCreate2Params;
@@ -171,5 +171,5 @@ const DeployErc20Command = ({
 	);
 };
 
-export default DeployErc20Command;
+export default DeployCreate2Command;
 export const options = zodDeployCreateXCreate2Params;
