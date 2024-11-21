@@ -1,5 +1,5 @@
 {
-	"name": "@ethereum-optimism/super-cli",
+	"name": "@eth-optimism/super-cli",
 	"version": "0.0.1",
 	"license": "MIT",
 	"bin": "dist/cli.js",

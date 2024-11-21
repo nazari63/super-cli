@@ -1,5 +1,5 @@
 ---
-"@ethereum-optimism/super-cli": patch
+"@eth-optimism/super-cli": patch
 ---
 
 Init
