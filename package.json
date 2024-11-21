@@ -3,6 +3,10 @@
    "private": true,
    "packageManager": "pnpm@9.0.2",
    "nx": {},
+   "scripts": {
+      "release:publish": "pnpm install --frozen-lockfile && pnpm nx run-many --target=build && changeset publish",
+      "release:version": "changeset version && pnpm install --lockfile-only"
+   },
    "dependencies": {
       "@changesets/cli": "^2.27.10",
       "nx": "^20.1.2"
