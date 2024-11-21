@@ -13,14 +13,15 @@ export const EnterFoundryProjectPath = () => {
 	return (
 		<Box flexDirection="column">
 			<Box>
-				<Text>Enter the path to your foundry project:</Text>
+				<Text>Enter the path to your foundry project (default: "."):</Text>
 			</Box>
 			<TextInput
-				onSubmit={foundryProjectPath =>
+				onSubmit={foundryProjectPath => {
+					const projectPath = foundryProjectPath.trim();
 					submitEnterFoundryProjectPath({
-						foundryProjectPath: foundryProjectPath.trim(),
-					})
-				}
+						foundryProjectPath: projectPath === '' ? '.' : projectPath,
+					});
+				}}
 			/>
 		</Box>
 	);
