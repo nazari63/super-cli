@@ -1,6 +1,7 @@
 {
     "name": "toml-parser",
     "version": "0.0.1",
+    "private": true,
     "main": "./index.js",
     "scripts": {
         "build": "napi build --release",
