@@ -13,27 +13,8 @@ jobs:
     if: github.repository == 'ethereum-optimism/super-cli'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@v2
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-          registry-url: https://registry.npmjs.org
-          cache: pnpm
-
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          components: rustfmt
-
-      - name: pnpm install node modules
-        run: pnpm i --frozen-lockfile
-        shell: bash
+      - name: Setup
+        uses: ./.github/actions/setup
 
       - name: Set deployment token
         run: npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
