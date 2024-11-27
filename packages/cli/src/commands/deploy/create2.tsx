@@ -15,6 +15,7 @@ import {z} from 'zod';
 import {option} from 'pastel';
 import {DeployCreate2Wizard} from '@/deploy-create2-wizard/DeployCreate2Wizard';
 import {fromZodError} from 'zod-validation-error';
+import VerifyCommand from '@/commands/verify';
 
 const statusBadge = {
 	pending: <Spinner />,
@@ -35,8 +36,8 @@ const zodDeployCreate2CommandEntrypointOptions = zodDeployCreateXCreate2Params
 		z.object({
 			interactive: z
 				.boolean()
-				.optional()
 				.default(false)
+				.optional()
 				.describe(
 					option({
 						description: 'Interactive mode',
@@ -97,6 +98,23 @@ const DeployCreate2Command = ({
 
 	if (!chainById || isAddressLoading || !deterministicAddress || !deployment) {
 		return <Spinner />;
+	}
+
+	if (deployment.state === 'completed') {
+		console.log(options);
+		if (options.verify) {
+			return (
+				<VerifyCommand
+					options={{
+						contractAddress: deterministicAddress,
+						forgeArtifactPath: options.forgeArtifactPath,
+						network: options.network,
+						chains: options.chains,
+					}}
+				/>
+			);
+		}
+		return <Text bold>Deployment run completed</Text>;
 	}
 
 	return (

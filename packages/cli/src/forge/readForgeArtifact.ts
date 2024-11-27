@@ -1,4 +1,4 @@
-import {zodHash, zodHex} from '@/validators/schemas';
+import {zodAddress, zodHash, zodHex} from '@/validators/schemas';
 import {Abi} from 'abitype/zod';
 import {z} from 'zod';
 import fs from 'fs';
@@ -21,6 +21,24 @@ const zodForgeArtifact = z.object({
 		language: z.enum(['Solidity', 'Vyper']),
 		sources: z.record(z.string(), zodCompilerOutputSource),
 		version: z.number(),
+		settings: z.object({
+			remappings: z.array(z.string()),
+			optimizer: z.object({
+				enabled: z.boolean(),
+				runs: z.number(),
+				details: z
+					.object({
+						peephole: z.boolean(),
+					})
+					.optional(),
+			}),
+			metadata: z.object({
+				bytecodeHash: z.string(),
+			}),
+			compilationTarget: z.record(z.string(), z.string()),
+			evmVersion: z.string(),
+			libraries: z.record(z.string(), z.record(z.string(), zodAddress)),
+		}),
 	}),
 });
 
