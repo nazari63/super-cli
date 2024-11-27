@@ -55,21 +55,28 @@ export const zodDeployCreateXCreate2Params = z.object({
 			alias: 'pk',
 		}),
 	),
-	chains: z
-		.string()
-		.transform(value => value.split(','))
-		.describe(
-			option({
-				description: 'Chains to deploy to',
-				alias: 'c',
-			}),
-		),
+	chains: z.array(z.string()).describe(
+		option({
+			description: 'Chains to deploy to',
+			alias: 'c',
+		}),
+	),
 	network: zodSupportedNetwork.describe(
 		option({
 			description: 'Network to deploy to',
 			alias: 'n',
 		}),
 	),
+	verify: z
+		.boolean()
+		.default(false)
+		.optional()
+		.describe(
+			option({
+				description: 'Verify contract on deployed chains',
+				alias: 'v',
+			}),
+		),
 });
 
 export type DeployCreateXCreate2Params = z.infer<
@@ -107,7 +114,10 @@ const createDeployContext = async ({
 	);
 
 	const publicClients = selectedChains.map(chain => {
-		return createPublicClient({chain, transport: http()});
+		return createPublicClient({
+			chain,
+			transport: http(),
+		});
 	});
 
 	return {
