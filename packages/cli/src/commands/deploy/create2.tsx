@@ -2,7 +2,7 @@ import {Box, Text, Newline} from 'ink';
 import {useEffect} from 'react';
 
 import {Spinner, UnorderedList, Badge, Alert, StatusMessage} from '@inkjs/ui';
-import {useDeploymentsStore} from '@/stores/deployments';
+import {DeploymentNetworks, useDeploymentsStore} from '@/stores/deployments';
 import {
 	deployCreateXCreate2,
 	deployCreateXCreate2ComputeAddress,
@@ -16,6 +16,7 @@ import {option} from 'pastel';
 import {DeployCreate2Wizard} from '@/deploy-create2-wizard/DeployCreate2Wizard';
 import {fromZodError} from 'zod-validation-error';
 import VerifyCommand from '@/commands/verify';
+import { parseSuperConfigFromTOML } from '@/utils/config';
 
 const statusBadge = {
 	pending: <Spinner />,
@@ -44,6 +45,15 @@ const zodDeployCreate2CommandEntrypointOptions = zodDeployCreateXCreate2Params
 						alias: 'i',
 					}),
 				),
+			toml: z
+				.string()
+				.optional()
+				.describe(
+					option({
+						description: 'Path to a TOML file to use as a configuration',
+						alias: 't',
+					}),
+				),
 		}),
 	);
 
@@ -60,8 +70,24 @@ const DeployCreate2CommandEntrypoint = ({
 		return <DeployCreate2Wizard />;
 	}
 
+	let commandOptions = { ...options };
+	if (options.toml) {
+		const superConfig = parseSuperConfigFromTOML(options.toml);
+
+		const params = superConfig.creation_params?.[0];
+		if (!params) {
+			return <StatusMessage variant="error">No creation params found in config file.</StatusMessage>
+		}
+
+		commandOptions.salt = params.salt;
+		commandOptions.chains = params.chains;
+		commandOptions.network = params.network as DeploymentNetworks;
+		commandOptions.verify = params.verify;
+		commandOptions.constructorArgs = params.constructor_args?.join(',');
+	}
+
 	// If non-interactive, all fields must be there
-	const parseResult = zodDeployCreateXCreate2Params.safeParse(options);
+	const parseResult = zodDeployCreateXCreate2Params.safeParse(commandOptions);
 	if (parseResult.success == false) {
 		return (
 			<StatusMessage variant="error">
