@@ -40,7 +40,7 @@ export const ConfigureConstructorArguments = () => {
 			<AbiItemForm
 				abiItem={constructorAbi}
 				onSubmit={result => {
-					// TODO fix type
+					// @ts-ignore TODO fix type
 					submitConfigureConstructorArguments({constructorArgs: result});
 				}}
 			/>

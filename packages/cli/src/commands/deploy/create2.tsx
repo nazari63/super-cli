@@ -100,11 +100,12 @@ const DeployCreate2Command = ({
 		return <Spinner />;
 	}
 
+	const postVerificationComponents = [];
 	if (deployment.state === 'completed') {
-		console.log(options);
 		if (options.verify) {
-			return (
+			postVerificationComponents.push(
 				<VerifyCommand
+					key="verify"
 					options={{
 						contractAddress: deterministicAddress,
 						forgeArtifactPath: options.forgeArtifactPath,
@@ -112,9 +113,9 @@ const DeployCreate2Command = ({
 						chains: options.chains,
 					}}
 				/>
-			);
+			)
 		}
-		return <Text bold>Deployment run completed</Text>;
+		postVerificationComponents.push(<Text key="completed" bold>Deployment run completed</Text>);
 	}
 
 	return (
@@ -222,9 +223,7 @@ const DeployCreate2Command = ({
 				</Box>
 			)}
 
-			{deployment?.state === 'completed' && (
-				<Text bold>Deployment run completed</Text>
-			)}
+			{deployment?.state === 'completed' && postVerificationComponents}
 
 			<Newline />
 		</Box>

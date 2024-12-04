@@ -49,7 +49,7 @@ export const estimateDeployCreate2Contract = async ({
 	salt,
 	initCode,
 	createXAddress,
-}: DeployCreate2ContractParameters): Promise<BigInt> => {
+}: DeployCreate2ContractParameters): Promise<bigint> => {
 	return await estimateContractGas(client, {
 		abi: createXABI,
 		address: createXAddress ?? CREATEX_ADDRESS,

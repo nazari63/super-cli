@@ -1,4 +1,3 @@
-import {FoundryProject} from '@/forge/foundryProject';
 import {Prettify} from '@/wizard-builder/utils';
 import {create, StateCreator} from 'zustand';
 
@@ -80,22 +79,13 @@ const createStandardJsonInputSlice: StateCreator<
 		}),
 });
 
-type ChainContractVerificationState =
-	| {chainId: number} & (
-			| {
-					verificationStatus: 'idle';
-			  }
-			| {
-					verificationStatus: 'pending';
-			  }
-			| {
-					verificationStatus: 'success';
-			  }
-			| {
-					verificationStatus: 'failure';
-					error: Error;
-			  }
-	  );
+type ChainContractVerificationStatus = 'idle' | 'pending' | 'success' | 'failure';
+
+type ChainContractVerificationState = {
+	chainId: number;
+	verificationStatus: ChainContractVerificationStatus;
+	error?: Error;
+};
 
 type VerifySlice = {
 	setVerifyPending: (chainId: number) => void;
