@@ -31,8 +31,5 @@ const bridgeWizard = defineWizard()
 	})
 	.build();
 
-type BridgeWizardType = typeof bridgeWizard;
 
 export const store = createWizardStore(bridgeWizard);
-
-const currentState = store.getState();

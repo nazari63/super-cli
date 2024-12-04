@@ -62,7 +62,7 @@ export const verifyContract = async (
 ) => {
 	const store = useContractVerificationStore.getState();
 
-	const {contractAddress, chains} = params;
+	const {contractAddress} = params;
 
 	let context: Awaited<ReturnType<typeof getVerifyContractContext>>;
 	try {

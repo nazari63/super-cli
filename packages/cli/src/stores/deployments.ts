@@ -1,4 +1,6 @@
+import { zodSupportedNetwork } from '@/superchain-registry/fetchChainList';
 import {Address, Hash, Hex} from 'viem';
+import { z } from 'zod';
 import {create} from 'zustand';
 
 export type DeploymentPlanState =
@@ -22,6 +24,8 @@ export type DeploymentPlanStep = {
 	completed: DeploymentPlanStepStatus;
 };
 
+export type DeploymentNetworks = z.infer<typeof zodSupportedNetwork>;
+
 export const allowedStateTransitions: Record<
 	DeploymentPlanState,
 	DeploymentPlanState[]
@@ -35,7 +39,7 @@ export const allowedStateTransitions: Record<
 export type DeploymentPlan = {
 	type: 'superchain-erc20' | 'createx-create2';
 	state: DeploymentPlanState;
-	network: 'mainnet' | 'sepolia';
+	network: DeploymentNetworks;
 	chainIds: number[];
 	deterministicAddress: Address;
 	creationParams: {
@@ -48,7 +52,7 @@ export type DeploymentPlan = {
 		chainId: number;
 		type: 'createxCreate2Deploy';
 		hash: Hash;
-		blockNumber: BigInt;
+		blockNumber: bigint;
 	}[];
 	steps: Record<number, DeploymentPlanStep>;
 };
@@ -89,7 +93,7 @@ export type AddBroadcastParameters = {
 		chainId: number;
 		type: 'createxCreate2Deploy';
 		hash: Hash;
-		blockNumber: BigInt;
+		blockNumber: bigint;
 	};
 };
 
@@ -108,7 +112,7 @@ export type MakeDeploymentPlanParameters = {
 
 	deterministicAddress: Address;
 	chainIds: number[];
-	network: 'mainnet' | 'sepolia';
+	network: DeploymentNetworks;
 
 	creationParams: {
 		constructorArgs?: Hex;
