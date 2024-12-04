@@ -2,7 +2,9 @@
 	"name": "@eth-optimism/super-cli",
 	"version": "0.0.1",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"bin": {
+		"super": "dist/cli.js"
+	},
 	"type": "module",
 	"engines": {
 		"node": ">=18.20"
