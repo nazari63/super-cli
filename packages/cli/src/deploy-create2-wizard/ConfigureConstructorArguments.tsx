@@ -5,6 +5,7 @@ import {AbiItemForm} from '@/deploy-create2-wizard/AbiItemForm';
 import {getArtifactPathForContract} from '@/forge/foundryProject';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
 import {Spinner} from '@inkjs/ui';
+import {useEffect} from 'react';
 
 export const ConfigureConstructorArguments = () => {
 	const {wizardState, submitConfigureConstructorArguments} =
@@ -21,6 +22,16 @@ export const ConfigureConstructorArguments = () => {
 
 	const {data: artifact, isLoading} = useForgeArtifact(path);
 
+	const constructorAbi =
+		artifact === undefined ? undefined : getConstructorAbi(artifact.abi);
+
+	useEffect(() => {
+		if (artifact && !constructorAbi) {
+			// Some contracts don't have a constructor
+			submitConfigureConstructorArguments({constructorArgs: []});
+		}
+	}, [artifact]);
+
 	if (isLoading || !artifact) {
 		return (
 			<Box flexDirection="column">
@@ -29,10 +40,8 @@ export const ConfigureConstructorArguments = () => {
 		);
 	}
 
-	const constructorAbi = getConstructorAbi(artifact.abi);
-
 	if (!constructorAbi) {
-		throw new Error('No constructor ABI found');
+		return null;
 	}
 
 	return (

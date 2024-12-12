@@ -13,6 +13,7 @@ import {SelectChains} from '@/deploy-create2-wizard/SelectChains';
 import {EnterPrivateKey} from '@/deploy-create2-wizard/EnterPrivateKey';
 import {DeployCreate2Command} from '@/commands/deploy/create2';
 import {getArtifactPathForContract} from '@/forge/foundryProject';
+import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
 
@@ -101,6 +102,12 @@ const WizardProgress = () => {
 
 export const DeployCreate2Wizard = () => {
 	const {wizardState} = useDeployCreate2WizardStore();
+
+	// TODO: update before alpha release, remove private key step entirely from wizard
+	useSaveWizardProgress('deployCreate2', wizardState, [
+		'completed',
+		'enter-private-key',
+	]);
 
 	const stepId = wizardState.stepId;
 
