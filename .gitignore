@@ -23,3 +23,5 @@ packages/*/.env
 .env.production.local
 
 npm-debug.log*
+
+local.db

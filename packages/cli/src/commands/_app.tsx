@@ -1,6 +1,7 @@
 import type {AppProps} from 'pastel';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {useInput} from 'ink';
+import {DbProvider} from '@/db/dbContext';
 
 export const queryClient = new QueryClient();
 
@@ -10,9 +11,12 @@ export default function App({Component, commandProps}: AppProps) {
 			process.exit();
 		}
 	});
+
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Component {...commandProps} />
+			<DbProvider>
+				<Component {...commandProps} />
+			</DbProvider>
 		</QueryClientProvider>
 	);
 }

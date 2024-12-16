@@ -1,13 +1,21 @@
 import {useDeployCreate2WizardStore} from '@/deploy-create2-wizard/deployCreate2WizardStore';
 import {Box, Text} from 'ink';
-import {TextInput} from '@inkjs/ui';
+import {Spinner} from '@inkjs/ui';
+import {useUserContext} from '@/queries/userContext';
+import {PathInput} from '@/components/path-input/PathInput';
 
 export const EnterFoundryProjectPath = () => {
 	const {wizardState, submitEnterFoundryProjectPath} =
 		useDeployCreate2WizardStore();
 
+	const {data: userContext, isLoading: isUserContextLoading} = useUserContext();
+
 	if (wizardState.stepId !== 'enter-foundry-project-path') {
 		throw new Error('Invalid state');
+	}
+
+	if (isUserContextLoading || !userContext) {
+		return <Spinner />;
 	}
 
 	return (
@@ -15,7 +23,8 @@ export const EnterFoundryProjectPath = () => {
 			<Box>
 				<Text>Enter the path to your foundry project (default: "."):</Text>
 			</Box>
-			<TextInput
+			<PathInput
+				defaultValue={userContext.forgeProjectPath ?? ''}
 				onSubmit={foundryProjectPath => {
 					const projectPath = foundryProjectPath.trim();
 					submitEnterFoundryProjectPath({

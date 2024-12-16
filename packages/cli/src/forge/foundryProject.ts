@@ -16,8 +16,9 @@ export const getArtifactDir = (foundryProjectPath: string) => {
 
 export const getArtifactPathForContract = (
 	foundryProjectPath: string,
-	contractFileName: string,
+	contractFileRelativePath: string,
 ) => {
+	const contractFileName = path.basename(contractFileRelativePath);
 	return path.join(
 		getArtifactDir(foundryProjectPath),
 		`${contractFileName}`,

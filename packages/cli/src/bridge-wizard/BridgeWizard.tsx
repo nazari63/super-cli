@@ -7,6 +7,7 @@ import {EnterAmount} from '@/bridge-wizard/EnterAmount';
 import {EnterPrivateKey} from '@/bridge-wizard/EnterPrivateKey';
 import {SelectChains} from '@/bridge-wizard/SelectChains';
 import {SelectNetwork} from '@/bridge-wizard/SelectNetwork';
+import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 import {Box, Text} from 'ink';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
@@ -90,6 +91,12 @@ const WizardProgress = () => {
 
 export const BridgeWizard = () => {
 	const {wizardState} = useBridgeWizardStore();
+
+	// TODO: update before alpha release, remove private key step entirely from wizard
+	useSaveWizardProgress('bridge', wizardState, [
+		'completed',
+		'enter-private-key',
+	]);
 
 	const stepId = wizardState.stepId;
 
