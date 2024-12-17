@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 const Task = ({ task }: { task: TransactionTaskEntry }) => {
 	const queryClient = useQueryClient();
-	const { sendTransaction, isPending, error } = useSendTransaction({
+	const { sendTransaction, isPending } = useSendTransaction({
 		mutation: {
 			onSuccess: async (hash) => {
 				await completeTransactionTask(task.id, hash);
