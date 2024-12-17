@@ -10,8 +10,8 @@
 		"node": ">=18.20"
 	},
 	"scripts": {
-		"build": "tsup",
-		"build:watch": "tsup --watch",
+		"build": "tsc && resolve-tspaths",
+		"build:watch": "tsc --watch",
 		"dev": "tsx src/cli.tsx",
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
@@ -20,7 +20,8 @@
 		"migrations:generate": "drizzle-kit generate"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"drizzle"
 	],
 	"dependencies": {
 		"@eth-optimism/viem": "^0.0.11",
@@ -63,7 +64,6 @@
 		"prettier": "^2.8.7",
 		"resolve-tspaths": "^0.8.22",
 		"ts-node": "^10.9.1",
-		"tsup": "^8.3.5",
 		"tsx": "^4.19.2",
 		"typescript": "^5.0.3",
 		"vite": "^5.4.11"
