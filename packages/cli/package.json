@@ -27,7 +27,6 @@
 		"@hono/node-server": "^1.13.7",
 		"@inkjs/ui": "^2.0.0",
 		"@libsql/client": "^0.14.0",
-		"@super-cli/signer-frontend": "workspace:*",
 		"@tanstack/react-query": "^5.59.20",
 		"@vitejs/plugin-react": "^4.3.3",
 		"abitype": "^1.0.6",
