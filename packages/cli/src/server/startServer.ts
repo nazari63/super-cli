@@ -5,12 +5,19 @@ import {serve} from '@hono/node-server';
 import {Hono} from 'hono';
 import fs from 'fs/promises';
 import {api} from '@/server/api';
+import type {Server} from 'node:http';
+import {Socket} from 'net';
 
+// TODO: fix this terribly hacky thing
+// Pretty hacky way to get the frontend dist path
+// Fix when we make the signer-frontend a published package
 export async function startServer() {
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
+	const isRunningFromDist = __dirname.includes('dist');
+
 	const absoluteFrontendDistPath = path.resolve(
 		__dirname,
-		'../../../signer-frontend/dist',
+		isRunningFromDist ? '../signer-frontend' : '../../../signer-frontend/dist',
 	);
 
 	const relativeFrontendDistPath = path.relative(
@@ -45,6 +52,27 @@ export async function startServer() {
 		return c.html(indexHtml);
 	});
 
-	const server = serve({fetch: app.fetch, port: 3000});
+	app.onError((err, c) => {
+		console.error('Server error:', err);
+		return c.json({message: 'Internal Server Error'}, 500);
+	});
+
+	const server = serve({fetch: app.fetch, port: 3000}) as Server;
+	const connections = new Set<Socket>();
+	server.on('connection', conn => {
+		connections.add(conn);
+		conn.on('close', () => connections.delete(conn));
+	});
+
+	const originalClose = server.close.bind(server);
+	server.close = (callback?: (err?: Error) => void) => {
+		// Explicitly kill all connections on shutdown
+		for (const conn of connections) {
+			conn.destroy();
+		}
+
+		return originalClose(callback);
+	};
+
 	return server;
 }
