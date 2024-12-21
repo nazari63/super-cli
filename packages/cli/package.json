@@ -10,13 +10,14 @@
 		"node": ">=18.20"
 	},
 	"scripts": {
-		"build": "tsc && resolve-tspaths",
+		"build": "tsc && resolve-tspaths && pnpm copy:signer-frontend",
 		"build:watch": "tsc --watch",
 		"dev": "tsx src/cli.tsx",
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix",
 		"start": "node dist/cli.js",
 		"typecheck": "tsc --noEmit",
+		"copy:signer-frontend": "cp -r ../signer-frontend/dist dist/signer-frontend",
 		"migrations:generate": "drizzle-kit generate"
 	},
 	"files": [
@@ -24,12 +25,14 @@
 		"drizzle"
 	],
 	"dependencies": {
+		"@super-cli/signer-frontend": "workspace:*",
 		"@eth-optimism/viem": "^0.0.11",
 		"@hono/node-server": "^1.13.7",
 		"@inkjs/ui": "^2.0.0",
 		"@libsql/client": "^0.14.0",
 		"@tanstack/react-query": "^5.59.20",
 		"@vitejs/plugin-react": "^4.3.3",
+		"@wagmi/core": "^2.16.0",
 		"abitype": "^1.0.6",
 		"chalk": "^5.3.0",
 		"dotenv": "^16.4.7",
@@ -42,10 +45,12 @@
 		"ink": "^5.0.1",
 		"ink-big-text": "^2.0.0",
 		"ink-gradient": "^3.0.0",
+		"ink-link": "^4.1.0",
 		"pastel": "^3.0.0",
 		"react": "^18.2.0",
 		"smol-toml": "^1.3.1",
 		"viem": "^2.21.41",
+		"wagmi": "^2.14.2",
 		"zod": "^3.21.4",
 		"zod-validation-error": "^3.4.0",
 		"zustand": "^5.0.1"
