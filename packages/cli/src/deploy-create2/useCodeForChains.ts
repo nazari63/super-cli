@@ -17,7 +17,9 @@ export const useCodeForChains = (address: Address, chainIds: number[]) => {
 		}),
 	});
 
-	const isDeployedToAllChains = queries.every(query => query.data !== null);
+	const isDeployedToAllChains = queries.every(
+		query => query.data !== null && query.data !== undefined,
+	);
 
 	return {
 		isDeployedToAllChains,
