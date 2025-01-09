@@ -4,7 +4,15 @@ import {useEffect, useState} from 'react';
 import {Spinner, Badge} from '@inkjs/ui';
 import {DeployCreateXCreate2Params} from '@/actions/deployCreateXCreate2';
 
-import {Address, Chain, encodeFunctionData, Hex} from 'viem';
+import {
+	Address,
+	Chain,
+	encodeFunctionData,
+	formatEther,
+	formatUnits,
+	Hex,
+	zeroAddress,
+} from 'viem';
 import {useConfig, useWaitForTransactionReceipt, useWriteContract} from 'wagmi';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
 import {ForgeArtifact} from '@/forge/readForgeArtifact';
@@ -26,6 +34,7 @@ import {
 import {useCodeForChains} from '@/deploy-create2/useCodeForChains';
 import {useRefetchCodeOnReceipt} from '@/deploy-create2/useRefetchCodeOnReceipt';
 import {VerifyCommandInner} from '@/commands/verify';
+import {useGasEstimation} from '@/hooks/useGasEstimation';
 
 // Prepares any required data or loading state if waiting
 export const DeployCreate2Command = ({
@@ -249,6 +258,19 @@ const DeployStatus = ({
 		}),
 	});
 
+	const {data: gasEstimation, isLoading: isGasEstimationLoading} =
+		useGasEstimation({
+			chainId: chain.id,
+			to: CREATEX_ADDRESS,
+			account: zeroAddress,
+
+			data: encodeFunctionData({
+				abi: createXABI,
+				functionName: 'deployCreate2',
+				args: [baseSalt, initCode],
+			}),
+		});
+
 	if (preVerificationCheckError) {
 		return (
 			<Box gap={1}>
@@ -306,7 +328,12 @@ const DeployStatus = ({
 		return (
 			<Box gap={1}>
 				<Badge color="blue">Ready</Badge>
-				<Text>Contract is ready to be deployed</Text>
+				<Text>Estimated fees</Text>
+				{isGasEstimationLoading || !gasEstimation ? (
+					<Spinner />
+				) : (
+					<GasEstimation gasEstimation={gasEstimation} />
+				)}
 			</Box>
 		);
 	}
@@ -330,6 +357,32 @@ const DeployStatus = ({
 			baseSalt={baseSalt}
 			deterministicAddress={deterministicAddress}
 		/>
+	);
+};
+
+const GasEstimation = ({
+	gasEstimation,
+}: {
+	gasEstimation: {
+		totalFee: bigint;
+		estimatedL1Fee: bigint;
+		estimatedL2Gas: bigint;
+		l2GasPrice: bigint;
+	};
+}) => {
+	return (
+		<Text>
+			<Text>(L1 Fee: </Text>
+			<Text color="green">{formatEther(gasEstimation.estimatedL1Fee)} ETH</Text>
+			<Text>) + (L2 Gas: </Text>
+			<Text color="yellow">{gasEstimation.estimatedL2Gas.toString()}</Text>
+			<Text> gas × L2 Gas Price: </Text>
+			<Text color="cyan">{formatUnits(gasEstimation.l2GasPrice, 9)} gwei</Text>
+			<Text>) = </Text>
+			<Text color="green" bold>
+				{formatEther(gasEstimation.totalFee)} ETH
+			</Text>
+		</Text>
 	);
 };
 
