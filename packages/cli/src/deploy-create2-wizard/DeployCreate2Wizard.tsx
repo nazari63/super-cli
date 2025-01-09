@@ -107,21 +107,29 @@ export const DeployCreate2Wizard = () => {
 	const stepId = wizardState.stepId;
 
 	if (stepId === 'completed') {
-		return (
-			<DeployCreate2Command
-				options={{
-					chains: wizardState.chainNames,
-					// privateKey: wizardState.privateKey,
-					salt: wizardState.salt,
-					forgeArtifactPath: getArtifactPathForContract(
-						wizardState.foundryProjectPath,
-						wizardState.selectedContract,
-					),
-					constructorArgs: wizardState.constructorArgs.join(','),
-					network: wizardState.network,
-				}}
-			/>
+		const options = {
+			chains: wizardState.chainNames,
+			salt: wizardState.salt,
+			forgeArtifactPath: getArtifactPathForContract(
+				wizardState.foundryProjectPath,
+				wizardState.selectedContract,
+			),
+			constructorArgs: wizardState.constructorArgs.join(','),
+			network: wizardState.network,
+		};
+
+		console.log(
+			Object.entries(options)
+				.map(
+					([key, value]) =>
+						`--${key.replace(
+							/[A-Z]/g,
+							letter => `-${letter.toLowerCase()}`,
+						)} ${value}`,
+				)
+				.join(' '),
 		);
+		return <DeployCreate2Command options={options} />;
 	}
 
 	return (

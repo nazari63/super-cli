@@ -10,10 +10,10 @@ import {mainnet, sepolia} from 'viem/chains';
 import {chainConfig} from 'viem/op-stack';
 import * as chains from 'viem/chains';
 
-const viemChainById = [...Object.values(chains)].reduce((acc, chain) => {
-		acc[chain.id] = chain;
-		return acc;
-	}, {} as Record<number, Chain>);
+const viemChainById = Object.values(chains).reduce((acc, chain) => {
+	acc[chain.id] = chain;
+	return acc;
+}, {} as Record<number, Chain>);
 
 const chainIdByParentChainName = {
 	mainnet: mainnet.id,
@@ -37,6 +37,7 @@ export const chainListItemToChain = (
 		return defineChain({
 			...viemChain,
 			id: config.chainId,
+			// Not all chains in viem have the sourceId specified
 			sourceId: sourceChainIdByChainId[config.chainId],
 		});
 	}

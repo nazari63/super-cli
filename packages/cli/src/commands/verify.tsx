@@ -1,13 +1,20 @@
 import {Box, Text} from 'ink';
 import {useEffect} from 'react';
-import {
-	verifyContract,
-	zodVerifyContractParams,
-} from '@/actions/verifyContract';
+import {zodVerifyContractParams} from '@/actions/verifyContract';
 import {z} from 'zod';
-import {useContractVerificationStore} from '@/stores/contractVerification';
-import {Spinner} from '@inkjs/ui';
-import {useMappingChainById} from '@/queries/chainById';
+import {Badge, Spinner} from '@inkjs/ui';
+import {useStandardJsonInputQuery} from '@/verify/getStandardJsonInputQuery';
+import {Address, Chain} from 'viem';
+
+import {useMappingChainByIdentifier} from '@/queries/chainByIdentifier';
+import {useMutation} from '@tanstack/react-query';
+import {
+	verifyOnBlockscoutMutation,
+	verifyOnBlockscoutMutationKey,
+} from '@/verify/verifyOnBlockscoutMutation';
+import {getBlockExplorerAddressLink} from '@/utils/blockExplorer';
+import {useForgeArtifact} from '@/queries/forgeArtifact';
+import {ForgeArtifact} from '@/forge/readForgeArtifact';
 
 const zodVerifyContractCommandParams = zodVerifyContractParams;
 
@@ -16,73 +23,148 @@ const VerifyCommand = ({
 }: {
 	options: z.infer<typeof zodVerifyContractCommandParams>;
 }) => {
-	useEffect(() => {
-		verifyContract(options);
-	}, []);
+	const {data: chainByIdentifier, isLoading: isChainByIdentifierLoading} =
+		useMappingChainByIdentifier();
 
-	const {currentStep, stateByChainId} = useContractVerificationStore();
-	const {data: chainById} = useMappingChainById();
+	const {data: forgeArtifact, isLoading: isForgeArtifactLoading} =
+		useForgeArtifact(options.forgeArtifactPath);
 
-	if (currentStep === 'prepare' || !chainById) {
-		return (
-			<Box>
-				<Spinner label="Preparing..." />
-			</Box>
-		);
+	if (isChainByIdentifierLoading || isForgeArtifactLoading) {
+		return <Spinner />;
 	}
 
-	if (currentStep === 'generate-standard-json-input') {
-		return (
-			<Box>
-				<Spinner label="Generating standard JSON input..." />
-			</Box>
-		);
+	if (!chainByIdentifier) {
+		return <Text>Error loading chains</Text>;
 	}
 
-	const chains = Object.values(stateByChainId).sort(
-		(a, b) => a.chainId - b.chainId,
+	if (!forgeArtifact) {
+		return <Text>Error loading forge artifact</Text>;
+	}
+
+	const chains = options.chains.map(
+		chain => chainByIdentifier[`${options.network}/${chain}`]!,
 	);
+
+	return (
+		<VerifyCommandInner
+			chains={chains}
+			forgeArtifactPath={options.forgeArtifactPath}
+			forgeArtifact={forgeArtifact}
+			contractAddress={options.contractAddress}
+		/>
+	);
+};
+
+export const VerifyCommandInner = ({
+	chains,
+	forgeArtifactPath,
+	contractAddress,
+	forgeArtifact,
+}: {
+	chains: Chain[];
+	forgeArtifactPath: string;
+	contractAddress: Address;
+	forgeArtifact: ForgeArtifact;
+}) => {
+	const {data: standardJsonInput, isLoading: isStandardJsonInputLoading} =
+		useStandardJsonInputQuery(forgeArtifactPath);
+
+	if (isStandardJsonInputLoading) {
+		return <Spinner />;
+	}
+
+	if (!standardJsonInput) {
+		return <Text>Error generating standard JSON input</Text>;
+	}
+
+	// TODO: support file with multiple contracts in single sol file & when there's multiple .sol files in a single artifact
+	const contractName = Object.values(
+		forgeArtifact.metadata.settings.compilationTarget,
+	)[0];
+
+	if (!contractName) {
+		return <Text>Error getting contract name</Text>;
+	}
 
 	return (
 		<Box flexDirection="column">
 			<Box marginBottom={1}>
-				<Text bold>Superchain Contract Verification</Text>
+				<Text bold underline>
+					Contract Verification (Blockscout)
+				</Text>
 			</Box>
-			{chains.map(chain => (
-				<Box key={chain.chainId} flexDirection="column">
-					<Box gap={1}>
-						<Box width={24}>
-							<Text color="blue">{`${options.network}/${
-								chainById[chain.chainId]!.name
-							}`}</Text>
-						</Box>
-						{chain.verificationStatus === 'pending' && (
-							<Box gap={1}>
-								<Spinner />
-								<Text dimColor>Verification in progress...</Text>
-							</Box>
-						)}
-						{chain.verificationStatus === 'success' && (
-							<Text color="green">
-								✓ Verification successful{' '}
-								{`${
-									chainById[chain.chainId]?.blockExplorers?.default.url
-								}/address/${options.contractAddress}`}
-							</Text>
-						)}
-						{chain.verificationStatus === 'failure' && (
-							<Text color="red">✗ Verification failed</Text>
-						)}
-					</Box>
-					{chain.error && (
-						<Box marginLeft={2}>
-							<Text color="red" dimColor>
-								Error: {chain.error.message || JSON.stringify(chain.error)}
-							</Text>
-						</Box>
-					)}
+			<Box flexDirection="row" paddingLeft={2}>
+				<Box flexDirection="column" marginRight={2}>
+					{chains.map(chain => (
+						<Text key={chain.id} bold color="blue">
+							{chain.name}:
+						</Text>
+					))}
 				</Box>
-			))}
+				<Box flexDirection="column">
+					{chains.map(chain => (
+						<VerifyForChain
+							key={chain.id}
+							chain={chain}
+							address={contractAddress}
+							standardJsonInput={standardJsonInput}
+							contractName={contractName}
+						/>
+					))}
+				</Box>
+			</Box>
+		</Box>
+	);
+};
+
+const VerifyForChain = ({
+	chain,
+	address,
+	standardJsonInput,
+	contractName,
+}: {
+	chain: Chain;
+	address: Address;
+	standardJsonInput: any;
+	contractName: string;
+}) => {
+	const {isPending, error, mutate} = useMutation({
+		mutationKey: verifyOnBlockscoutMutationKey(
+			address,
+			chain,
+			standardJsonInput,
+		),
+		mutationFn: () =>
+			verifyOnBlockscoutMutation(
+				address,
+				chain,
+				standardJsonInput,
+				contractName,
+			),
+	});
+
+	useEffect(() => {
+		mutate();
+	}, []);
+
+	if (isPending) {
+		return <Spinner label="Verifying contract..." />;
+	}
+
+	if (error) {
+		return (
+			<Box gap={1}>
+				<Badge color="red">Failed</Badge>
+				<Text>Error: {error.message}</Text>
+			</Box>
+		);
+	}
+
+	return (
+		<Box gap={1}>
+			<Badge color="green">Verified</Badge>
+			<Text>Contract successfully verified</Text>
+			<Text>{getBlockExplorerAddressLink(chain, address)}</Text>
 		</Box>
 	);
 };
