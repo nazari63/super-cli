@@ -3,10 +3,9 @@ import {useEffect, useState} from 'react';
 
 import {Spinner, Badge} from '@inkjs/ui';
 import {DeployCreateXCreate2Params} from '@/actions/deployCreateXCreate2';
-import {useMappingChainById} from '@/queries/chainById';
 
 import {Address, Chain, encodeFunctionData, Hex} from 'viem';
-import {useConfig, useWriteContract} from 'wagmi';
+import {useConfig, useWaitForTransactionReceipt, useWriteContract} from 'wagmi';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
 import {ForgeArtifact} from '@/forge/readForgeArtifact';
 import {CREATEX_ADDRESS, createXABI} from '@/contracts/createx/constants';
@@ -24,6 +23,9 @@ import {
 	ChooseExecutionOption,
 	ExecutionOption,
 } from '@/deploy-create2/ChooseExecutionOption';
+import {useCodeForChains} from '@/deploy-create2/useCodeForChains';
+import {useRefetchCodeOnReceipt} from '@/deploy-create2/useRefetchCodeOnReceipt';
+import {VerifyCommandInner} from '@/commands/verify';
 
 // Prepares any required data or loading state if waiting
 export const DeployCreate2Command = ({
@@ -31,9 +33,6 @@ export const DeployCreate2Command = ({
 }: {
 	options: DeployCreateXCreate2Params;
 }) => {
-	const {data: chainById, isLoading: isChainByIdLoading} =
-		useMappingChainById();
-
 	const {data: chainByIdentifier, isLoading: isChainByIdentifierLoading} =
 		useMappingChainByIdentifier();
 
@@ -41,8 +40,6 @@ export const DeployCreate2Command = ({
 		useForgeArtifact(options.forgeArtifactPath);
 
 	if (
-		isChainByIdLoading ||
-		!chainById ||
 		isForgeArtifactLoading ||
 		!forgeArtifact ||
 		isChainByIdentifierLoading ||
@@ -85,6 +82,12 @@ const DeployCreate2CommandInner = ({
 		constructorArgs: options.constructorArgs,
 		salt: options.salt,
 	});
+
+	const {isDeployedToAllChains} = useCodeForChains(
+		deterministicAddress,
+		chains.map(chain => chain.id),
+	);
+
 	const {chainsToDeployTo} = useChecksForChains({
 		deterministicAddress,
 		initCode,
@@ -161,7 +164,47 @@ const DeployCreate2CommandInner = ({
 					<ChooseExecutionOption onSubmit={setExecutionOption} />
 				</Box>
 			)}
+			{isDeployedToAllChains && (
+				<CompletedOrVerify
+					shouldVerify={!!options.verify}
+					chains={chains}
+					forgeArtifactPath={options.forgeArtifactPath}
+					contractAddress={deterministicAddress}
+					forgeArtifact={forgeArtifact}
+				/>
+			)}
 		</Box>
+	);
+};
+
+const CompletedOrVerify = ({
+	shouldVerify,
+	chains,
+	forgeArtifactPath,
+	contractAddress,
+	forgeArtifact,
+}: {
+	shouldVerify: boolean;
+	chains: Chain[];
+	forgeArtifactPath: string;
+	contractAddress: Address;
+	forgeArtifact: ForgeArtifact;
+}) => {
+	if (!shouldVerify) {
+		return (
+			<Box>
+				<Text>Contract is successfully deployed to all chains</Text>
+			</Box>
+		);
+	}
+
+	return (
+		<VerifyCommandInner
+			chains={chains}
+			forgeArtifactPath={forgeArtifactPath}
+			contractAddress={contractAddress}
+			forgeArtifact={forgeArtifact}
+		/>
 	);
 };
 
@@ -303,7 +346,20 @@ const PrivateKeyExecution = ({
 	deterministicAddress: Address;
 	privateKey: Hex;
 }) => {
-	const {writeContract, isPending, error} = useWriteContract();
+	const {
+		writeContract,
+		isPending,
+		error,
+		data: transactionHash,
+	} = useWriteContract();
+
+	const {data: receipt, isLoading: isReceiptLoading} =
+		useWaitForTransactionReceipt({
+			hash: transactionHash,
+			chainId: chain.id,
+		});
+
+	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
 
 	useEffect(() => {
 		writeContract({
@@ -322,6 +378,10 @@ const PrivateKeyExecution = ({
 
 	if (error) {
 		return <Text>Error deploying contract: {error.message}</Text>;
+	}
+
+	if (isReceiptLoading) {
+		return <Spinner label="Waiting for receipt" />;
 	}
 
 	return (
@@ -366,6 +426,18 @@ const ExternalSignerExecution = ({
 		});
 	}, []);
 
+	const {data: receipt, isLoading: isReceiptLoading} =
+		useWaitForTransactionReceipt({
+			hash: taskEntryById[taskId]?.hash,
+			chainId: chain.id,
+		});
+
+	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
+
+	if (isReceiptLoading) {
+		return <Spinner label="Waiting for receipt" />;
+	}
+
 	if (!taskEntryById[taskId]?.hash) {
 		return (
 			<Box gap={1}>
@@ -384,7 +456,7 @@ const ExternalSignerExecution = ({
 		<Box gap={1}>
 			<Badge color="green">Deployed</Badge>
 			<Text>Contract successfully deployed</Text>
-			<Text>{getBlockExplorerAddressLink(chain, deterministicAddress)}</Text>
+			<Text>{getBlockExplorerAddressLink(chain, deterministicAddress)}</Text>P
 		</Box>
 	);
 };

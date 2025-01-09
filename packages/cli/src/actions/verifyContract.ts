@@ -1,11 +1,6 @@
-import {fromFoundryArtifactPath} from '@/forge/foundryProject';
-import {queryMappingChainListItemByIdentifier} from '@/queries/chainRegistryItemByIdentifier';
-import {useContractVerificationStore} from '@/stores/contractVerification';
 import {zodSupportedNetwork} from '@/superchain-registry/fetchChainList';
 import {zodAddress} from '@/validators/schemas';
-import {verifyContractOnBlockscout} from '@/verify/blockscout';
-import {createStandardJsonInput} from '@/verify/createStandardJsonInput';
-import {identifyExplorer} from '@/verify/identifyExplorerType';
+
 import {option} from 'pastel';
 import {z} from 'zod';
 
@@ -35,87 +30,3 @@ export const zodVerifyContractParams = z.object({
 		}),
 	),
 });
-
-const getVerifyContractContext = async (
-	params: z.infer<typeof zodVerifyContractParams>,
-) => {
-	const {forgeArtifactPath, network, chains} = params;
-	const chainIdentifiers = chains.map(chain => `${network}/${chain}`);
-
-	const chainListItemByIdentifier =
-		await queryMappingChainListItemByIdentifier();
-	const {foundryProject, contractFileName} = await fromFoundryArtifactPath(
-		forgeArtifactPath,
-	);
-
-	return {
-		selectedChainList: chainIdentifiers.map(
-			identifier => chainListItemByIdentifier[identifier],
-		),
-		foundryProject,
-		contractFileName,
-	};
-};
-
-export const verifyContract = async (
-	params: z.infer<typeof zodVerifyContractParams>,
-) => {
-	const store = useContractVerificationStore.getState();
-
-	const {contractAddress} = params;
-
-	let context: Awaited<ReturnType<typeof getVerifyContractContext>>;
-	try {
-		context = await getVerifyContractContext(params);
-
-		store.setPrepareSuccess(
-			context.selectedChainList.map(chain => chain!.chainId),
-		);
-	} catch (e) {
-		store.setPrepareError(e as Error);
-		return;
-	}
-
-	const {foundryProject, contractFileName} = context;
-
-	// TODO: Type this
-	let standardJsonInput: any;
-	try {
-		standardJsonInput = await createStandardJsonInput(
-			foundryProject.baseDir,
-			contractFileName,
-		);
-		store.setGenerateSuccess();
-	} catch (e) {
-		store.setGenerateError(e as Error);
-		return;
-	}
-
-	await Promise.all(
-		context.selectedChainList.map(async chain => {
-			const chainId = chain!.chainId;
-			const explorer = chain!.explorers[0]!;
-
-			store.setVerifyPending(chainId);
-
-			const explorerType = await identifyExplorer(explorer).catch(() => null);
-
-			if (explorerType !== 'blockscout') {
-				throw new Error('Unsupported explorer');
-			}
-
-			try {
-				await verifyContractOnBlockscout(
-					chain!.explorers[0]!,
-					contractAddress,
-					contractFileName.replace('.sol', ''),
-					standardJsonInput,
-				);
-				store.setVerifySuccess(chainId);
-			} catch (e) {
-				store.setVerifyError(chainId, e as Error);
-				return;
-			}
-		}),
-	);
-};

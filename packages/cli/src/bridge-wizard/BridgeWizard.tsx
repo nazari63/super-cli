@@ -4,7 +4,6 @@ import {
 	useBridgeWizardStore,
 } from '@/bridge-wizard/bridgeWizardStore';
 import {EnterAmount} from '@/bridge-wizard/EnterAmount';
-import {EnterPrivateKey} from '@/bridge-wizard/EnterPrivateKey';
 import {SelectChains} from '@/bridge-wizard/SelectChains';
 import {SelectNetwork} from '@/bridge-wizard/SelectNetwork';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
@@ -82,9 +81,11 @@ const WizardProgress = () => {
 	}
 	return (
 		<Box flexDirection="column">
-			{steps.map(({id}) => {
-				return <WizardProgressForStep stepId={id} key={id} />;
-			})}
+			{steps
+				.filter(({id}) => id !== 'completed')
+				.map(({id}) => {
+					return <WizardProgressForStep stepId={id} key={id} />;
+				})}
 		</Box>
 	);
 };
@@ -109,7 +110,6 @@ export const BridgeWizard = () => {
 
 			<Box flexDirection="column">
 				{stepId === 'select-network' && <SelectNetwork />}
-				{stepId === 'enter-private-key' && <EnterPrivateKey />}
 				{stepId === 'select-chains' && <SelectChains />}
 				{stepId === 'enter-amount' && <EnterAmount />}
 			</Box>
