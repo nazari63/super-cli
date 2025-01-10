@@ -1,5 +1,5 @@
 import {useBridgeWizardStore} from '@/bridge-wizard/bridgeWizardStore';
-import {SupportedNetwork} from '@/utils/superchainRegistry';
+import {SupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 import {Select} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 

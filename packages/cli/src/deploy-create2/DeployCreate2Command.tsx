@@ -170,7 +170,10 @@ const DeployCreate2CommandInner = ({
 			</Box>
 			{chainsToDeployTo && chainsToDeployTo.length > 0 && !executionOption && (
 				<Box>
-					<ChooseExecutionOption onSubmit={setExecutionOption} />
+					<ChooseExecutionOption
+						label={'🚀 Ready to deploy!'}
+						onSubmit={setExecutionOption}
+					/>
 				</Box>
 			)}
 			{isDeployedToAllChains && (

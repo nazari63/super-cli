@@ -1,23 +1,13 @@
 import {useDeployCreate2WizardStore} from '@/deploy-create2-wizard/deployCreate2WizardStore';
-import {initChainConfig} from '@/utils/superchainRegistry';
+import {useSuperchainRegistryChainList} from '@/queries/superchainRegistryChainList';
 import {MultiSelect, Spinner} from '@inkjs/ui';
-import {useQuery} from '@tanstack/react-query';
 import {Box, Text} from 'ink';
 import {useState} from 'react';
 
 export const SelectChains = () => {
 	const {wizardState, submitSelectChains} = useDeployCreate2WizardStore();
 
-	const {
-		data: chains,
-		isLoading,
-		error,
-	} = useQuery({
-		queryKey: ['init-chain-config'],
-		queryFn: async () => {
-			return await initChainConfig();
-		},
-	});
+	const {data: chains, isLoading, error} = useSuperchainRegistryChainList();
 
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

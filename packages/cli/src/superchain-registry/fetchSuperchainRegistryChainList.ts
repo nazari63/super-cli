@@ -45,7 +45,9 @@ export type ChainList = z.infer<typeof zodChainList>;
 
 const zodChainListResponse = z.array(zodChainListItem);
 
-export const fetchChainList = async (chainListURL: string) => {
+export const fetchSuperchainRegistryChainList = async (
+	chainListURL: string,
+) => {
 	const response = await fetch(chainListURL);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch chain list: ${response.statusText}`);

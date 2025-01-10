@@ -17,16 +17,18 @@ export type ExecutionOption =
 	  };
 
 export const ChooseExecutionOption = ({
+	label,
 	onSubmit,
 }: {
+	label: string;
 	onSubmit: (option: ExecutionOption) => void;
 }) => {
 	const [chosePrivateKey, setChosePrivateKey] = useState(false);
 	return (
 		<Box flexDirection="column" gap={1}>
 			<Box gap={1}>
-				<Text bold>🚀 Ready to deploy!</Text>
-				<Text bold>How would you like to deploy?</Text>
+				<Text bold>{label}</Text>
+				<Text bold>How would you like to send the transaction?</Text>
 			</Box>
 			<Select
 				options={[

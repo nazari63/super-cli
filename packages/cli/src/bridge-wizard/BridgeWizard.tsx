@@ -4,9 +4,12 @@ import {
 	useBridgeWizardStore,
 } from '@/bridge-wizard/bridgeWizardStore';
 import {EnterAmount} from '@/bridge-wizard/EnterAmount';
+import {EnterRecipient} from '@/bridge-wizard/EnterRecipient';
 import {SelectChains} from '@/bridge-wizard/SelectChains';
 import {SelectNetwork} from '@/bridge-wizard/SelectNetwork';
+import BridgeEntrypoint from '@/commands/bridge';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
+import {SupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 import {Box, Text} from 'ink';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
@@ -73,11 +76,13 @@ const WizardProgressForStep = ({stepId}: {stepId: BridgeWizardStepId}) => {
 const WizardProgress = () => {
 	const {steps, wizardState} = useBridgeWizardStore();
 	if (wizardState.stepId === 'completed') {
-		return (
-			<Box>
-				<Text>Completed</Text>
-			</Box>
-		);
+		const options = {
+			network: wizardState.network as SupportedNetwork,
+			chains: wizardState.chains,
+			amount: wizardState.amount,
+			recipient: wizardState.recipient,
+		};
+		return <BridgeEntrypoint options={options} />;
 	}
 	return (
 		<Box flexDirection="column">
@@ -109,6 +114,7 @@ export const BridgeWizard = () => {
 			<WizardProgress />
 
 			<Box flexDirection="column">
+				{stepId === 'enter-recipient' && <EnterRecipient />}
 				{stepId === 'select-network' && <SelectNetwork />}
 				{stepId === 'select-chains' && <SelectChains />}
 				{stepId === 'enter-amount' && <EnterAmount />}

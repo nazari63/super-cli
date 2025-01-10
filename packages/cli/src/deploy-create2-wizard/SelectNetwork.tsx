@@ -4,7 +4,7 @@ import {Box, Text} from 'ink';
 import {
 	SupportedNetwork,
 	zodSupportedNetwork,
-} from '@/superchain-registry/fetchChainList';
+} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 
 export const SelectNetwork = () => {
 	const {wizardState, submitSelectNetwork} = useDeployCreate2WizardStore();

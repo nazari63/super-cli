@@ -7,7 +7,7 @@ import {fromZodError} from 'zod-validation-error';
 import {parseSuperConfigFromTOML} from '@/utils/config';
 
 import {DeployCreate2Command} from '@/deploy-create2/DeployCreate2Command';
-import {SupportedNetwork} from '@/superchain-registry/fetchChainList';
+import {SupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 
 const zodDeployCreate2CommandEntrypointOptions = zodDeployCreateXCreate2Params
 	.partial()

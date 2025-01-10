@@ -4,7 +4,6 @@ import {validator} from 'hono/validator';
 import {useTransactionTaskStore} from '@/stores/transactionTaskStore';
 import {zodHash} from '@/validators/schemas';
 import {z} from 'zod';
-import {CHAIN_LIST_URL} from '@/superchain-registry/fetchChainList';
 import {queryMappingChainById} from '@/queries/chainById';
 
 export const api = new Hono();
@@ -26,7 +25,7 @@ api.get('/healthz', async c => {
 });
 
 api.post('/getMappingChainById', async c => {
-	const chainById = await queryMappingChainById(CHAIN_LIST_URL);
+	const chainById = await queryMappingChainById();
 
 	return c.json({
 		chainById,
