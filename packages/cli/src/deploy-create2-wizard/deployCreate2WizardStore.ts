@@ -1,4 +1,4 @@
-import {zodSupportedNetwork} from '@/superchain-registry/fetchChainList';
+import {zodSupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 import {createWizardStore} from '@/wizard-builder/createWizardStore';
 import {defineWizard, InferStepId} from '@/wizard-builder/defineWizard';
 import {z} from 'zod';

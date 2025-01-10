@@ -118,17 +118,6 @@ export const DeployCreate2Wizard = () => {
 			network: wizardState.network,
 		};
 
-		console.log(
-			Object.entries(options)
-				.map(
-					([key, value]) =>
-						`--${key.replace(
-							/[A-Z]/g,
-							letter => `-${letter.toLowerCase()}`,
-						)} ${value}`,
-				)
-				.join(' '),
-		);
 		return <DeployCreate2Command options={options} />;
 	}
 
@@ -146,7 +135,6 @@ export const DeployCreate2Wizard = () => {
 			{stepId === 'configure-salt' && <ConfigureSalt />}
 			{stepId === 'select-network' && <SelectNetwork />}
 			{stepId === 'select-chains' && <SelectChains />}
-			{/* {stepId === 'enter-private-key' && <EnterPrivateKey />} */}
 		</Box>
 	);
 };

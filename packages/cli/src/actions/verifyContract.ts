@@ -1,4 +1,4 @@
-import {zodSupportedNetwork} from '@/superchain-registry/fetchChainList';
+import {zodSupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 import {zodAddress} from '@/validators/schemas';
 
 import {option} from 'pastel';

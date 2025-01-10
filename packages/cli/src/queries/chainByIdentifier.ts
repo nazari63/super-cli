@@ -1,16 +1,15 @@
 import {queryClient} from '@/commands/_app';
 import {queryMappingChainById} from '@/queries/chainById';
-import {queryChainConfig} from '@/queries/chainConfig';
-import {CHAIN_LIST_URL} from '@/superchain-registry/fetchChainList';
+import {querySuperchainRegistryChainList} from '@/queries/superchainRegistryChainList';
 import {useQuery} from '@tanstack/react-query';
 import {Chain} from 'viem';
 
-const getQueryParams = (chainListURL: string) => {
+const getQueryParams = () => {
 	return {
-		queryKey: ['chainByIdentifier', chainListURL],
+		queryKey: ['chainByIdentifier'],
 		queryFn: async () => {
-			const chainList = await queryChainConfig(chainListURL);
-			const chainById = await queryMappingChainById(chainListURL);
+			const chainList = await querySuperchainRegistryChainList();
+			const chainById = await queryMappingChainById();
 
 			return chainList.reduce((acc, config) => {
 				acc[config.identifier] = chainById[config.chainId]!;
@@ -20,17 +19,13 @@ const getQueryParams = (chainListURL: string) => {
 	};
 };
 
-export const queryMappingChainByIdentifier = async (
-	chainListURL: string = CHAIN_LIST_URL,
-) => {
-	return queryClient.fetchQuery(getQueryParams(chainListURL));
+export const queryMappingChainByIdentifier = async () => {
+	return queryClient.fetchQuery(getQueryParams());
 };
 
-export const useMappingChainByIdentifier = (
-	chainListURL: string = CHAIN_LIST_URL,
-) => {
+export const useMappingChainByIdentifier = () => {
 	return useQuery({
-		...getQueryParams(chainListURL),
+		...getQueryParams(),
 		staleTime: Infinity, // For the duration of the CLI session, this is cached
 	});
 };

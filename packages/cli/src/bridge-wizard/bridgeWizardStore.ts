@@ -1,10 +1,18 @@
 import {defineWizard, InferStepId} from '@/wizard-builder/defineWizard';
 import {z} from 'zod';
 import {formatEther} from 'viem';
-import {Address as ZodAddress} from 'abitype/zod';
 import {createWizardStore} from '@/wizard-builder/createWizardStore';
+import {zodAddress} from '@/validators/schemas';
 
 const bridgeWizard = defineWizard()
+	.addStep({
+		id: 'enter-recipient',
+		schema: z.object({
+			recipient: zodAddress,
+		}),
+		title: 'Enter Recipient',
+		getSummary: () => '',
+	})
 	.addStep({
 		id: 'select-network',
 		schema: z.object({
@@ -14,21 +22,12 @@ const bridgeWizard = defineWizard()
 		getSummary: state => `${state.network}`,
 	})
 	.addStep({
-		id: 'enter-private-key',
-		schema: z.object({
-			privateKey: z.string(),
-			address: ZodAddress,
-		}),
-		title: 'Enter Private Key',
-		getSummary: state => `${state.address}`,
-	})
-	.addStep({
 		id: 'select-chains',
 		schema: z.object({
-			chainIds: z.array(z.number()),
+			chains: z.array(z.string()),
 		}),
 		title: 'Select Chains',
-		getSummary: state => `${state.chainIds.join(', ')}`,
+		getSummary: state => `${state.chains.join(', ')}`,
 	})
 	.addStep({
 		id: 'enter-amount',
@@ -39,9 +38,9 @@ const bridgeWizard = defineWizard()
 		getSummary: state => {
 			const perChainAmount = Number(formatEther(state.amount)).toFixed(2);
 			const totalAmount = Number(
-				formatEther(state.amount * BigInt(state.chainIds.length)),
+				formatEther(state.amount * BigInt(state.chains.length)),
 			).toFixed(2);
-			return `${perChainAmount} ETH × ${state.chainIds.length} chains = ${totalAmount} ETH total`;
+			return `${perChainAmount} ETH × ${state.chains.length} chains = ${totalAmount} ETH total`;
 		},
 	})
 	.build();

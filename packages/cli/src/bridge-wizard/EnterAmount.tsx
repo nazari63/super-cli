@@ -45,10 +45,10 @@ export const EnterAmount = () => {
 
 	const {data: balance, isLoading: isLoadingBalance} = useBalance(
 		wizardState.network,
-		wizardState.address,
+		wizardState.recipient,
 	);
 
-	const numChains = wizardState.chainIds.length;
+	const numChains = wizardState.chains.length;
 
 	return (
 		<Box flexDirection="column" gap={1}>

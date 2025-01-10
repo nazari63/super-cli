@@ -1,5 +1,5 @@
 import {useBridgeWizardStore} from '@/bridge-wizard/bridgeWizardStore';
-import {useChainConfig} from '@/queries/chainConfig';
+import {useSuperchainRegistryChainList} from '@/queries/superchainRegistryChainList';
 import {MultiSelect, Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import {useState} from 'react';
@@ -15,7 +15,7 @@ export const SelectChains = () => {
 		data: chains,
 		isLoading: isLoadingChains,
 		error: loadChainsError,
-	} = useChainConfig();
+	} = useSuperchainRegistryChainList();
 
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -67,16 +67,15 @@ export const SelectChains = () => {
 					.filter(chain => chain.parent.chain === wizardState.network)
 					.map(chain => ({
 						label: `${chain.name} (${chain.chainId})`,
-						value: chain.chainId.toString(),
+						value: chain.identifier.split('/')[1]!,
 					}))}
-				onSubmit={chainIdStrs => {
-					if (chainIdStrs.length === 0) {
+				onSubmit={chainNames => {
+					if (chainNames.length === 0) {
 						setErrorMessage('You must select at least one chain');
 						return;
 					}
-					submitSelectChains({
-						chainIds: chainIdStrs.map(Number),
-					});
+
+					submitSelectChains({chains: chainNames});
 				}}
 			/>
 			{errorMessage && <Text color="red">{errorMessage}</Text>}

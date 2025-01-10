@@ -13,7 +13,7 @@ import {useDeployCreate2WizardStore} from '@/deploy-create2-wizard/deployCreate2
 const options = [
 	{label: '🚀 Deploy a contract', value: 'deploy'},
 	{label: '🌉 Bridge assets', value: 'bridge'},
-	{label: '✅ Verify a contract', value: 'verify'},
+	// {label: '✅ Verify a contract', value: 'verify'},
 ];
 
 export default function DefaultEntrypoint() {
