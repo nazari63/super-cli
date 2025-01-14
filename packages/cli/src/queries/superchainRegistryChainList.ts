@@ -2,7 +2,7 @@ import {queryClient} from '@/commands/_app';
 import {
 	CHAIN_LIST_URL,
 	fetchSuperchainRegistryChainList,
-} from '@/superchain-registry/fetchSuperchainRegistryChainList';
+} from '@/utils/fetchSuperchainRegistryChainList';
 import {useQuery} from '@tanstack/react-query';
 
 const getQueryParams = (chainListURL: string) => {

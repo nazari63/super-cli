@@ -5,7 +5,7 @@ import {immer} from 'zustand/middleware/immer';
 import {
 	createTransactionTaskId,
 	TransactionTask,
-} from '@/transaction-task/transactionTask';
+} from '@/utils/transactionTask';
 
 export type TransactionTaskEntry = {
 	id: string;
