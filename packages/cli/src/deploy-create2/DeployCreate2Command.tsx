@@ -13,7 +13,7 @@ import {
 	Hex,
 	zeroAddress,
 } from 'viem';
-import {useConfig, useWaitForTransactionReceipt, useWriteContract} from 'wagmi';
+import {useConfig, useTransaction, useWaitForTransactionReceipt, useWriteContract} from 'wagmi';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
 import {ForgeArtifact} from '@/forge/readForgeArtifact';
 import {CREATEX_ADDRESS, createXABI} from '@/contracts/createx/constants';
@@ -35,6 +35,9 @@ import {useCodeForChains} from '@/deploy-create2/useCodeForChains';
 import {useRefetchCodeOnReceipt} from '@/deploy-create2/useRefetchCodeOnReceipt';
 import {VerifyCommandInner} from '@/commands/verify';
 import {useGasEstimation} from '@/hooks/useGasEstimation';
+import { useBroadcastStore } from '@/stores/broadcastStore';
+import { writeMultichainBroadcast } from '@/utils/broadcasts';
+import { fromFoundryArtifactPath } from '@/forge/foundryProject';
 
 // Prepares any required data or loading state if waiting
 export const DeployCreate2Command = ({
@@ -57,7 +60,11 @@ export const DeployCreate2Command = ({
 		return <Spinner />;
 	}
 
-	const chains = options.chains.map(
+	// TODO: Fix option formatting between wizard and command
+	// Wizards = [ 'op', 'base' ]
+	// Command = [ 'op, base' ]
+	const flattenedChains = options.chains.flatMap(chain => chain.split(','));
+	const chains = flattenedChains.map(
 		chain => chainByIdentifier[`${options.network}/${chain}`]!,
 	);
 
@@ -79,6 +86,8 @@ const DeployCreate2CommandInner = ({
 	forgeArtifact: ForgeArtifact;
 	options: DeployCreateXCreate2Params;
 }) => {
+	const { createBroadcast } = useBroadcastStore();
+
 	const [executionOption, setExecutionOption] =
 		useState<ExecutionOption | null>(
 			options.privateKey
@@ -103,6 +112,19 @@ const DeployCreate2CommandInner = ({
 		baseSalt,
 		chainIds: chains.map(chain => chain.id),
 	});
+
+	useEffect(() => {
+		(async () => {
+			const { foundryProject, contractFileName } = await fromFoundryArtifactPath(options.forgeArtifactPath)
+
+			createBroadcast({
+				contractAddress: deterministicAddress,
+				contractName: contractFileName,
+				foundryProjectRoot: foundryProject.baseDir,
+				contractArguments: options.constructorArgs?.split(','),
+			});
+		})()
+	}, []);
 
 	return (
 		<Box flexDirection="column" gap={1}>
@@ -202,6 +224,21 @@ const CompletedOrVerify = ({
 	contractAddress: Address;
 	forgeArtifact: ForgeArtifact;
 }) => {
+	const { broadcasts } = useBroadcastStore();
+	const [isGeneratingBroadcastArtifacts, setIsGeneratingBroadcastArtifacts] = useState(true);
+
+	useEffect(() => {
+		const multichainBroadcast = broadcasts[contractAddress];
+		if (multichainBroadcast) {
+			writeMultichainBroadcast(multichainBroadcast);
+		}
+		setIsGeneratingBroadcastArtifacts(false);
+	}, [broadcasts]);
+
+	if (isGeneratingBroadcastArtifacts) {
+		return <Spinner label="Generating broadcast artifacts" />;
+	}
+
 	if (!shouldVerify) {
 		return (
 			<Box>
@@ -409,11 +446,18 @@ const PrivateKeyExecution = ({
 		data: transactionHash,
 	} = useWriteContract();
 
+	const { addTransaction } = useBroadcastStore();
+
 	const {data: receipt, isLoading: isReceiptLoading} =
 		useWaitForTransactionReceipt({
 			hash: transactionHash,
 			chainId: chain.id,
 		});
+
+	const { data: transaction, isLoading: isTransactionLoading } = useTransaction({
+		hash: transactionHash,
+		chainId: chain.id,
+	});
 
 	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
 
@@ -428,6 +472,18 @@ const PrivateKeyExecution = ({
 		});
 	}, []);
 
+	useEffect(() => {
+		if (receipt && transaction) {
+			addTransaction({
+				chainId: chain.id,
+				hash: transaction.hash,
+				transaction: transaction,
+				receipt: receipt,
+				contractAddress: deterministicAddress,
+			});
+		}
+	}, [receipt, transaction]);
+
 	if (isPending) {
 		return <Spinner label="Deploying contract" />;
 	}
@@ -436,7 +492,7 @@ const PrivateKeyExecution = ({
 		return <Text>Error deploying contract: {error.message}</Text>;
 	}
 
-	if (isReceiptLoading) {
+	if (isReceiptLoading || isTransactionLoading) {
 		return <Spinner label="Waiting for receipt" />;
 	}
 
@@ -460,6 +516,7 @@ const ExternalSignerExecution = ({
 	baseSalt: Hex;
 	deterministicAddress: Address;
 }) => {
+	const { addTransaction } = useBroadcastStore();
 	const encodedData = encodeFunctionData({
 		abi: createXABI,
 		args: [baseSalt, initCode],
@@ -488,9 +545,27 @@ const ExternalSignerExecution = ({
 			chainId: chain.id,
 		});
 
+	const { data: transaction, isLoading: isTransactionLoading } = useTransaction({
+		hash: taskEntryById[taskId]?.hash,
+		chainId: chain.id,
+	});
+		
 	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
 
-	if (isReceiptLoading) {
+
+	useEffect(() => {
+		if (receipt && transaction) {
+			addTransaction({
+				chainId: chain.id,
+				hash: transaction.hash,
+				transaction: transaction,
+				receipt: receipt,
+				contractAddress: deterministicAddress,
+			});
+		}
+	}, [receipt, transaction]);
+	
+	if (isReceiptLoading || isTransactionLoading) {
 		return <Spinner label="Waiting for receipt" />;
 	}
 
