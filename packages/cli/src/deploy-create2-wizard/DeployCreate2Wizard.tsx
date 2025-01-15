@@ -13,6 +13,7 @@ import {SelectChains} from '@/deploy-create2-wizard/SelectChains';
 import {getArtifactPathForContract} from '@/forge/foundryProject';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 import {DeployCreate2Command} from '@/deploy-create2/DeployCreate2Command';
+import {ShouldVerifyContract} from '@/deploy-create2-wizard/ShouldVerifyContract';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
 
@@ -116,6 +117,7 @@ export const DeployCreate2Wizard = () => {
 			),
 			constructorArgs: wizardState.constructorArgs.join(','),
 			network: wizardState.network,
+			verify: wizardState.shouldVerifyContract,
 		};
 
 		return <DeployCreate2Command options={options} />;
@@ -135,6 +137,7 @@ export const DeployCreate2Wizard = () => {
 			{stepId === 'configure-salt' && <ConfigureSalt />}
 			{stepId === 'select-network' && <SelectNetwork />}
 			{stepId === 'select-chains' && <SelectChains />}
+			{stepId === 'should-verify-contract' && <ShouldVerifyContract />}
 		</Box>
 	);
 };

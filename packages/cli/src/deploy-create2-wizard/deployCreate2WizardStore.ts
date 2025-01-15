@@ -52,15 +52,14 @@ const deployCreate2WizardStore = defineWizard()
 		title: 'Select Chains',
 		getSummary: state => state.chainNames.join(', '),
 	})
-	// .addStep({
-	// 	id: 'enter-private-key',
-	// 	schema: z.object({
-	// 		privateKey: zodHex,
-	// 		address: zodAddress,
-	// 	}),
-	// 	title: 'Enter Private Key',
-	// 	getSummary: state => `${state.address}`,
-	// })
+	.addStep({
+		id: 'should-verify-contract',
+		schema: z.object({
+			shouldVerifyContract: z.boolean(),
+		}),
+		title: 'Verify Contract',
+		getSummary: state => (state.shouldVerifyContract ? 'Yes' : 'No'),
+	})
 	.build();
 
 export type DeployCreate2WizardStore = typeof deployCreate2WizardStore;
