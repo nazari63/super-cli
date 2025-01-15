@@ -6,14 +6,6 @@ import {zodAddress} from '@/validators/schemas';
 
 const bridgeWizard = defineWizard()
 	.addStep({
-		id: 'enter-recipient',
-		schema: z.object({
-			recipient: zodAddress,
-		}),
-		title: 'Enter Recipient',
-		getSummary: () => '',
-	})
-	.addStep({
 		id: 'select-network',
 		schema: z.object({
 			network: z.string(),
@@ -28,6 +20,14 @@ const bridgeWizard = defineWizard()
 		}),
 		title: 'Select Chains',
 		getSummary: state => `${state.chains.join(', ')}`,
+	})
+	.addStep({
+		id: 'enter-recipient',
+		schema: z.object({
+			recipient: zodAddress,
+		}),
+		title: 'Enter Recipient',
+		getSummary: () => '',
 	})
 	.addStep({
 		id: 'enter-amount',
