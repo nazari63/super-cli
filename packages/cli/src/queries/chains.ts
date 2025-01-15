@@ -3,10 +3,24 @@ import {querySuperchainRegistryChainList} from '@/queries/superchainRegistryChai
 import {SuperchainRegistryAddresses} from '@/superchain-registry/fetchSuperchainRegistryAddresses';
 import {ChainListItem} from '@/superchain-registry/fetchSuperchainRegistryChainList';
 import {chainConfig} from 'viem/op-stack';
-import {mainnet, sepolia} from 'viem/chains';
+import {
+	base,
+	baseSepolia,
+	mainnet,
+	optimism,
+	optimismSepolia,
+	sepolia,
+} from 'viem/chains';
 import {defineChain} from 'viem';
 import {queryClient} from '@/commands/_app';
 import {viemChainById} from '@/viemChainById';
+
+const TEMP_overrideBlockExplorerUrlByChainId = {
+	[baseSepolia.id]: 'https://base-sepolia.blockscout.com/',
+	[base.id]: 'https://base.blockscout.com/',
+	[optimismSepolia.id]: 'https://optimism-sepolia.blockscout.com/',
+	[optimism.id]: 'https://optimism.blockscout.com/',
+} as Record<number, string>;
 
 const chainIdByParentChainName = {
 	mainnet: mainnet.id,
@@ -32,6 +46,14 @@ const toViemChain = (
 					// Should always be defined if we trust Superchain Registry
 					address: superchainRegistryAddresses[chainId]!.L1StandardBridgeProxy,
 				},
+			},
+		},
+		blockExplorers: {
+			default: {
+				name: 'Blockscout',
+				url:
+					TEMP_overrideBlockExplorerUrlByChainId[chainId] ??
+					(chainListItem.explorers[0] as string),
 			},
 		},
 	};
