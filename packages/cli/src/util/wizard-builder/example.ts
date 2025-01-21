@@ -1,5 +1,5 @@
-import {createWizardStore} from '@/utils/wizard-builder/createWizardStore';
-import {defineWizard} from '@/utils/wizard-builder/defineWizard';
+import {createWizardStore} from '@/util/wizard-builder/createWizardStore';
+import {defineWizard} from '@/util/wizard-builder/defineWizard';
 import {z} from 'zod';
 
 const bridgeWizard = defineWizard()

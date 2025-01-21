@@ -8,7 +8,7 @@ import {
 import {Config} from 'wagmi';
 
 import {simulateContract} from '@wagmi/core';
-import {CREATEX_ADDRESS, createXABI} from '@/utils/createx/constants';
+import {CREATEX_ADDRESS, createXABI} from '@/util/createx/constants';
 
 export const simulationCheckQueryKey = (
 	deterministicAddress: Address,

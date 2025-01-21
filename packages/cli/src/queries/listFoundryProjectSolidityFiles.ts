@@ -1,6 +1,6 @@
 import {queryClient} from '@/commands/_app';
-import {findSolidityFiles} from '@/utils/forge/findSolidityFiles';
-import {getSrcDir} from '@/utils/forge/foundryProject';
+import {findSolidityFiles} from '@/util/forge/findSolidityFiles';
+import {getSrcDir} from '@/util/forge/foundryProject';
 import {QueryOptions, useQuery} from '@tanstack/react-query';
 
 const getQueryParams = (foundryProjectPath: string) => {

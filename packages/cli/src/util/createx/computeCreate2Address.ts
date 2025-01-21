@@ -1,5 +1,5 @@
 import {Address, concatHex, Hex, keccak256} from 'viem';
-import {CREATEX_ADDRESS} from '@/utils/createx/constants';
+import {CREATEX_ADDRESS} from '@/util/createx/constants';
 
 // Replicated logic from
 // https://github.com/pcaversaccio/createx/blob/ab60cc031b38111a5fad9358d018240dfa78cb8e/src/CreateX.sol#L575

@@ -4,7 +4,7 @@ import {TextInput} from '@inkjs/ui';
 import {useBridgeWizardStore} from '@/actions/bridge/wizard/bridgeWizardStore';
 import {useState} from 'react';
 import {isAddress} from 'viem';
-import {zodAddress} from '@/utils/schemas';
+import {zodAddress} from '@/util/schemas';
 
 export const EnterRecipient = () => {
 	const {submitEnterRecipient} = useBridgeWizardStore();

@@ -91,3 +91,9 @@ export const fromFoundryArtifactPath = async (foundryArtifactPath: string) => {
 		contractFileName: `${path.basename(relativePath).replace('.json', '')}.sol`,
 	};
 };
+
+export const getContractNameFromFoundryArtifactPath = async (
+	foundryArtifactPath: string,
+) => {
+	return `${foundryArtifactPath.replace('.json', '')}.sol`;
+};

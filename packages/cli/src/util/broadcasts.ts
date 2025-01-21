@@ -1,124 +1,172 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import { MultichainBroadcast } from "@/stores/broadcastStore";
-import { Address, Hash, Hex, numberToHex, TransactionReceipt } from "viem";
+import {
+	Address,
+	Hash,
+	Hex,
+	numberToHex,
+	Transaction,
+	TransactionReceipt,
+} from 'viem';
+
+export type CreateBroadcastParams = {
+	contractName: string;
+	contractAddress: Address;
+	contractArguments?: any[];
+	foundryProjectRoot: string;
+};
+
+export type AddTransactionParams = {
+	contractAddress: Address;
+	chainId: number;
+	hash: Hash;
+	transaction: Transaction;
+	receipt: TransactionReceipt;
+};
+
+export type Broadcast = {
+	chainId: number;
+	hash: Hash;
+	transaction: Transaction;
+	receipt: TransactionReceipt;
+};
+
+export type MultichainBroadcast = {
+	name: string;
+	address: Address;
+	timestamp: number;
+	type: 'CREATE2';
+	contractArguments: any[];
+	foundryProjectRoot: string;
+	transactions: Record<number, Broadcast>;
+};
 
 export type TransactionBroadcast = {
-    hash: Hash
-    transactionType: string
-    contractName: string
-    contractAddress: Address
-    function: string | null
-    arguments: any[]
-    transaction: {
-        from: Address
-        to: Address
-        value: Hex;
-        input: Hex;
-        nonce: Hex;
-        gas: Hex;
-        chainId: Hex;
-    };
-    additionalContracts: any[];
-    isFixedGasLimit: boolean;
-}
+	hash: Hash;
+	transactionType: string;
+	contractName: string;
+	contractAddress: Address;
+	function: string | null;
+	arguments: any[];
+	transaction: {
+		from: Address;
+		to: Address;
+		value: Hex;
+		input: Hex;
+		nonce: Hex;
+		gas: Hex;
+		chainId: Hex;
+	};
+	additionalContracts: any[];
+	isFixedGasLimit: boolean;
+};
 
 export type Deployment = {
-    transactions: TransactionBroadcast[];
-    receipts: TransactionReceipt[];
-    timestamp: number;
-    chain: number;
-}
+	transactions: TransactionBroadcast[];
+	receipts: TransactionReceipt[];
+	timestamp: number;
+	chain: number;
+};
 
 export type RunArtifact = {
-    deployments: Deployment[];
-    timestamp: number;
-}
+	deployments: Deployment[];
+	timestamp: number;
+};
 
 const DEFAULT_OUTPUT_DIR = path.join('broadcast', 'multi');
- 
-export function writeMultichainBroadcast(multichainBroadcast: MultichainBroadcast) {
-    const { transactions, address, name, timestamp, type, contractArguments, foundryProjectRoot } = multichainBroadcast;
 
-    if (!Object.keys(transactions).length) {
-        return;
-    }
+export const writeMultichainBroadcast = async (
+	multichainBroadcast: MultichainBroadcast,
+) => {
+	const {
+		transactions,
+		address,
+		name,
+		timestamp,
+		type,
+		contractArguments,
+		foundryProjectRoot,
+	} = multichainBroadcast;
 
-    const outputDir = path.join(foundryProjectRoot, DEFAULT_OUTPUT_DIR);
+	if (!Object.keys(transactions).length) {
+		return;
+	}
 
-    const runArtifact = {
-        deployments: [],
-        timestamp,
-    } as RunArtifact
+	const outputDir = path.join(foundryProjectRoot, DEFAULT_OUTPUT_DIR);
 
-    Object.keys(transactions).forEach(chainIdStr => {
-        const chainId = Number(chainIdStr);
-    
-        if (!transactions[chainId]) {
-            return
-        }
+	const runArtifact = {
+		deployments: [],
+		timestamp,
+	} as RunArtifact;
 
-        const { hash, transaction, receipt } = transactions[chainId];
+	Object.keys(transactions).forEach(chainIdStr => {
+		const chainId = Number(chainIdStr);
 
-        const transactionData = {
-            hash,
-            transactionType: type,
-            contractName: name,
-            contractAddress: address,
-            function: null,
-            arguments: contractArguments,
-            transaction: {
-                from: receipt.from,
-                to: receipt.to,
-                gas: transaction.gas,
-                value: transaction.value,
-                input: transaction.input,
-                nonce: numberToHex(transaction.nonce),
-                chainId: numberToHex(chainId),
-                additionalContracts: [],
-                isFixedGasLimit: false,
-            }
-        } as unknown as TransactionBroadcast
+		if (!transactions[chainId]) {
+			return;
+		}
 
-        const receiptData = {
-            status: receipt.status === 'success' ? '0x1' : '0x0',
-            cumulativeGasUsed: receipt.cumulativeGasUsed,
-            logs: receipt.logs,
-            logsBloom: receipt.logsBloom,
-            type: transaction.typeHex,
-            transactionHash: receipt.transactionHash,
-            transactionIndex: numberToHex(receipt.transactionIndex),
-            blockHash: receipt.blockHash,
-            blockNumber: receipt.blockNumber,
-            gasUsed: receipt.gasUsed,
-            effectiveGasPrice: receipt.effectiveGasPrice,
-            blobGasPrice: receipt.blobGasPrice,
-            from: receipt.from,
-            to: receipt.to,
-            contractAddress: receipt.contractAddress,
-        } as unknown as TransactionReceipt
+		const {hash, transaction, receipt} = transactions[chainId];
 
-        const deployment: Deployment = {
-            transactions: [transactionData],
-            receipts: [receiptData],
-            timestamp,
-            chain: chainId,
-        }
+		const transactionData = {
+			hash,
+			transactionType: type,
+			contractName: name,
+			contractAddress: address,
+			function: null,
+			arguments: contractArguments,
+			transaction: {
+				from: receipt.from,
+				to: receipt.to,
+				gas: transaction.gas,
+				value: transaction.value,
+				input: transaction.input,
+				nonce: numberToHex(transaction.nonce),
+				chainId: numberToHex(chainId),
+				additionalContracts: [],
+				isFixedGasLimit: false,
+			},
+		} as unknown as TransactionBroadcast;
 
-        runArtifact.deployments.push(deployment);
-    })
+		const receiptData = {
+			status: receipt.status === 'success' ? '0x1' : '0x0',
+			cumulativeGasUsed: receipt.cumulativeGasUsed,
+			logs: receipt.logs,
+			logsBloom: receipt.logsBloom,
+			type: transaction.typeHex,
+			transactionHash: receipt.transactionHash,
+			transactionIndex: numberToHex(receipt.transactionIndex),
+			blockHash: receipt.blockHash,
+			blockNumber: receipt.blockNumber,
+			gasUsed: receipt.gasUsed,
+			effectiveGasPrice: receipt.effectiveGasPrice,
+			blobGasPrice: receipt.blobGasPrice,
+			from: receipt.from,
+			to: receipt.to,
+			contractAddress: receipt.contractAddress,
+		} as unknown as TransactionReceipt;
 
-    const latestDirname = path.join(outputDir, `${name}-latest`);
-    const timestampDirname = path.join(outputDir, `${name}-${timestamp}`);
-    fs.mkdirSync(latestDirname, { recursive: true });
-    fs.mkdirSync(timestampDirname, { recursive: true });
+		const deployment: Deployment = {
+			transactions: [transactionData],
+			receipts: [receiptData],
+			timestamp,
+			chain: chainId,
+		};
 
-    const fileContents = JSON.stringify(
-        runArtifact,
-        (_, val) => typeof val === 'bigint' ? numberToHex(val) : val,
-        2,
-    );
+		runArtifact.deployments.push(deployment);
+	});
 
-    fs.writeFileSync(path.join(latestDirname, 'run.json'), fileContents);
-    fs.writeFileSync(path.join(timestampDirname, 'run.json'), fileContents);
-}
+	const latestDirname = path.join(outputDir, `${name}-latest`);
+	const timestampDirname = path.join(outputDir, `${name}-${timestamp}`);
+	await fs.mkdir(latestDirname, {recursive: true});
+	await fs.mkdir(timestampDirname, {recursive: true});
+
+	const fileContents = JSON.stringify(
+		runArtifact,
+		(_, val) => (typeof val === 'bigint' ? numberToHex(val) : val),
+		2,
+	);
+
+	await fs.writeFile(path.join(latestDirname, 'run.json'), fileContents);
+	await fs.writeFile(path.join(timestampDirname, 'run.json'), fileContents);
+};

@@ -2,12 +2,12 @@ import {
 	InferFieldsAtStep,
 	InferStateAtStep,
 	WizardStep,
-} from '@/utils/wizard-builder/defineWizard';
+} from '@/util/wizard-builder/defineWizard';
 import {
 	capitalizeWords,
 	CapitalizeWords,
 	Prettify,
-} from '@/utils/wizard-builder/utils';
+} from '@/util/wizard-builder/utils';
 import {create} from 'zustand';
 
 export type WizardPossibleStates<Steps extends WizardStep<any, any>[]> = {

@@ -1,4 +1,4 @@
-import {fromFoundryArtifactPath} from '@/utils/forge/foundryProject';
+import {fromFoundryArtifactPath} from '@/util/forge/foundryProject';
 import {createStandardJsonInput} from '@/actions/verify/createStandardJsonInput';
 import {useQuery} from '@tanstack/react-query';
 
