@@ -1,16 +1,16 @@
-import {l1StandardBridgeAbi} from '@/abi/l1StandardBridgeAbi';
-import {multicall3Abi} from '@/abi/multicall3Abi';
+import {l1StandardBridgeAbi} from '@/constants/l1StandardBridgeAbi';
+import {multicall3Abi} from '@/constants/multicall3Abi';
 import {
 	ChooseExecutionOption,
 	ExecutionOption,
-} from '@/deploy-create2/ChooseExecutionOption';
+} from '@/components/ChooseExecutionOption';
 import {useMappingChainByIdentifier} from '@/queries/chainByIdentifier';
 import {useTransactionTaskStore} from '@/stores/transactionTaskStore';
-import {zodSupportedNetwork} from '@/superchain-registry/fetchSuperchainRegistryChainList';
-import {createTransactionTaskId} from '@/transaction-task/transactionTask';
-import {getBlockExplorerTxHashLink} from '@/utils/blockExplorer';
-import {zodAddress, zodPrivateKey, zodValueAmount} from '@/validators/schemas';
-import {viemChainById} from '@/viemChainById';
+import {zodSupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
+import {createTransactionTaskId} from '@/util/transactionTask';
+import {getBlockExplorerTxHashLink} from '@/util/blockExplorer';
+import {zodAddress, zodPrivateKey, zodValueAmount} from '@/util/schemas';
+import {viemChainById} from '@/util/viemChainById';
 import {Badge, Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import {option} from 'pastel';
@@ -268,7 +268,10 @@ const ExternalSignerExecution = ({
 		createTask(task);
 	}, []);
 
-	const transactionHash = taskEntryById[taskId]?.hash;
+	const transactionHash =
+		taskEntryById[taskId]?.result?.type === 'success'
+			? taskEntryById[taskId]?.result?.hash
+			: undefined;
 
 	const {isLoading: isReceiptLoading} = useWaitForTransactionReceipt({
 		hash: transactionHash,
