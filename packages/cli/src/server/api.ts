@@ -1,8 +1,11 @@
 import {Hono} from 'hono';
 import {cors} from 'hono/cors';
 import {validator} from 'hono/validator';
-import {useTransactionTaskStore} from '@/stores/transactionTaskStore';
-import {zodHash} from '@/utils/schemas';
+import {
+	onTaskSuccess,
+	useTransactionTaskStore,
+} from '@/stores/transactionTaskStore';
+import {zodHash} from '@/util/schemas';
 import {z} from 'zod';
 import {queryMappingChainById} from '@/queries/chainById';
 
@@ -65,7 +68,7 @@ api.post(
 		const {id, hash} = c.req.valid('json');
 
 		// TODO: fetch the transaction receipt and check that the hash corresponds to the task (check to, data, value, etc)
-		useTransactionTaskStore.getState().completeTask(id, hash);
+		onTaskSuccess(id, hash);
 		return c.json({
 			signatureRequest: {},
 		});

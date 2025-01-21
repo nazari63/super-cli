@@ -1,5 +1,5 @@
-import {getArtifactPathForContract} from '@/utils/forge/foundryProject';
-import {readForgeArtifact} from '@/utils/forge/readForgeArtifact';
+import {getArtifactPathForContract} from '@/util/forge/foundryProject';
+import {readForgeArtifact} from '@/util/forge/readForgeArtifact';
 import fs from 'fs/promises';
 
 // https://github.com/ethereum-optimism/optimism/issues/10202

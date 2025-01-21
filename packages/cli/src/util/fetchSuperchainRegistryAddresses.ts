@@ -1,4 +1,4 @@
-import {zodAddress} from '@/utils/schemas';
+import {zodAddress} from '@/util/schemas';
 import {z} from 'zod';
 
 export const SUPERCHAIN_REGISTRY_ADDRESSES_URL =

@@ -6,11 +6,11 @@ import {
 } from '@/components/ChooseExecutionOption';
 import {useMappingChainByIdentifier} from '@/queries/chainByIdentifier';
 import {useTransactionTaskStore} from '@/stores/transactionTaskStore';
-import {zodSupportedNetwork} from '@/utils/fetchSuperchainRegistryChainList';
-import {createTransactionTaskId} from '@/utils/transactionTask';
-import {getBlockExplorerTxHashLink} from '@/utils/blockExplorer';
-import {zodAddress, zodPrivateKey, zodValueAmount} from '@/utils/schemas';
-import {viemChainById} from '@/utils/viemChainById';
+import {zodSupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
+import {createTransactionTaskId} from '@/util/transactionTask';
+import {getBlockExplorerTxHashLink} from '@/util/blockExplorer';
+import {zodAddress, zodPrivateKey, zodValueAmount} from '@/util/schemas';
+import {viemChainById} from '@/util/viemChainById';
 import {Badge, Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import {option} from 'pastel';
@@ -268,7 +268,10 @@ const ExternalSignerExecution = ({
 		createTask(task);
 	}, []);
 
-	const transactionHash = taskEntryById[taskId]?.hash;
+	const transactionHash =
+		taskEntryById[taskId]?.result?.type === 'success'
+			? taskEntryById[taskId]?.result?.hash
+			: undefined;
 
 	const {isLoading: isReceiptLoading} = useWaitForTransactionReceipt({
 		hash: transactionHash,

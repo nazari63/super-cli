@@ -9,7 +9,7 @@ import {SelectChains} from '@/actions/bridge/wizard/steps/SelectChains';
 import {SelectNetwork} from '@/actions/bridge/wizard/steps/SelectNetwork';
 import BridgeEntrypoint from '@/commands/bridge';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
-import {SupportedNetwork} from '@/utils/fetchSuperchainRegistryChainList';
+import {SupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
 import {Box, Text} from 'ink';
 
 type StepStatus = 'done' | 'current' | 'upcoming';

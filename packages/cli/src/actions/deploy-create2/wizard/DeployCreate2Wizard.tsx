@@ -11,7 +11,7 @@ import {ConfigureSalt} from '@/actions/deploy-create2/wizard/steps/ConfigureSalt
 import {SelectNetwork} from '@/actions/deploy-create2/wizard/steps/SelectNetwork';
 import {SelectChains} from '@/actions/deploy-create2/wizard/steps/SelectChains';
 import {ShouldVerifyContract} from '@/actions/deploy-create2/wizard/steps/ShouldVerifyContract';
-import {getArtifactPathForContract} from '@/utils/forge/foundryProject';
+import {getArtifactPathForContract} from '@/util/forge/foundryProject';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 import {DeployCreate2Command} from '@/actions/deploy-create2/DeployCreate2Command';
 

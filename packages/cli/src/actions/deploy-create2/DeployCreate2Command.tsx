@@ -13,22 +13,19 @@ import {
 	Hex,
 	zeroAddress,
 } from 'viem';
-import {
-	useConfig,
-	useTransaction,
-	useWaitForTransactionReceipt,
-	useWriteContract,
-} from 'wagmi';
+import {useConfig, useWaitForTransactionReceipt} from 'wagmi';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
-import {ForgeArtifact} from '@/utils/forge/readForgeArtifact';
-import {CREATEX_ADDRESS, createXABI} from '@/utils/createx/constants';
+import {ForgeArtifact} from '@/util/forge/readForgeArtifact';
+import {CREATEX_ADDRESS, createXABI} from '@/util/createx/constants';
 import {useMappingChainByIdentifier} from '@/queries/chainByIdentifier';
 import {privateKeyToAccount} from 'viem/accounts';
-import {useTransactionTaskStore} from '@/stores/transactionTaskStore';
-import {createTransactionTaskId} from '@/utils/transactionTask';
-import {getBlockExplorerAddressLink} from '@/utils/blockExplorer';
+import {
+	onTaskSuccess,
+	useTransactionTaskStore,
+} from '@/stores/transactionTaskStore';
+import {getBlockExplorerAddressLink} from '@/util/blockExplorer';
 import {getDeployCreate2Params} from '@/actions/deploy-create2/getDeployCreate2Params';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import {preVerificationCheckQueryOptions} from '@/actions/deploy-create2/queries/preVerificationCheckQuery';
 import {simulationCheckQueryOptions} from '@/actions/deploy-create2/queries/simulationCheckQuery';
 import {useChecksForChains} from '@/actions/deploy-create2/hooks/useChecksForChains';
@@ -36,13 +33,15 @@ import {
 	ChooseExecutionOption,
 	ExecutionOption,
 } from '@/components/ChooseExecutionOption';
-import {useCodeForChains} from '@/actions/deploy-create2/hooks/useCodeForChains';
-import {useRefetchCodeOnReceipt} from '@/actions/deploy-create2/hooks/useRefetchCodeOnReceipt';
+
 import {VerifyCommandInner} from '@/commands/verify';
 import {useGasEstimation} from '@/hooks/useGasEstimation';
-import {useBroadcastStore} from '@/stores/broadcastStore';
-import {writeMultichainBroadcast} from '@/utils/broadcasts';
-import {fromFoundryArtifactPath} from '@/utils/forge/foundryProject';
+import {useOperation} from '@/stores/operationStore';
+import {
+	deployCreate2,
+	executeTransactionOperation,
+} from '@/actions/deploy-create2/deployCreate2';
+import {sendTransaction} from '@wagmi/core';
 
 // Prepares any required data or loading state if waiting
 export const DeployCreate2Command = ({
@@ -91,8 +90,6 @@ const DeployCreate2CommandInner = ({
 	forgeArtifact: ForgeArtifact;
 	options: DeployCreateXCreate2Params;
 }) => {
-	const {createBroadcast} = useBroadcastStore();
-
 	const [executionOption, setExecutionOption] =
 		useState<ExecutionOption | null>(
 			options.privateKey
@@ -106,32 +103,43 @@ const DeployCreate2CommandInner = ({
 		salt: options.salt,
 	});
 
-	const {isDeployedToAllChains} = useCodeForChains(
-		deterministicAddress,
-		chains.map(chain => chain.id),
-	);
-
-	const {chainsToDeployTo} = useChecksForChains({
+	const {chainsToDeployTo: chainIdsToDeployTo} = useChecksForChains({
 		deterministicAddress,
 		initCode,
 		baseSalt,
 		chainIds: chains.map(chain => chain.id),
 	});
 
-	useEffect(() => {
-		(async () => {
-			const {foundryProject, contractFileName} = await fromFoundryArtifactPath(
-				options.forgeArtifactPath,
-			);
+	const wagmiConfig = useConfig();
 
-			createBroadcast({
-				contractAddress: deterministicAddress,
-				contractName: contractFileName,
-				foundryProjectRoot: foundryProject.baseDir,
-				contractArguments: options.constructorArgs?.split(','),
+	const chainIdsToDeployToSet = new Set(chainIdsToDeployTo);
+
+	const chainsToDeployTo = chainIdsToDeployTo
+		? wagmiConfig.chains.filter(chain => chainIdsToDeployToSet.has(chain.id))
+		: undefined;
+
+	const {mutate, data} = useMutation({
+		mutationFn: () => {
+			if (!chainsToDeployTo) {
+				throw new Error('No chains to deploy to');
+			}
+
+			return deployCreate2({
+				wagmiConfig,
+				deterministicAddress,
+				initCode,
+				baseSalt,
+				chains: chainsToDeployTo,
+				foundryArtifactPath: options.forgeArtifactPath,
+				contractArguments: options.constructorArgs?.split(',') ?? [],
 			});
-		})();
-	}, []);
+		},
+	});
+
+	useEffect(() => {
+		if (!chainsToDeployTo) return;
+		mutate();
+	}, [chainsToDeployTo?.map(x => x.id).join('-')]);
 
 	return (
 		<Box flexDirection="column" gap={1}>
@@ -201,11 +209,33 @@ const DeployCreate2CommandInner = ({
 				<Box>
 					<ChooseExecutionOption
 						label={'🚀 Ready to deploy!'}
-						onSubmit={setExecutionOption}
+						onSubmit={async executionOption => {
+							if (executionOption.type === 'privateKey') {
+								const taskEntryById =
+									useTransactionTaskStore.getState().taskEntryById;
+								const account = privateKeyToAccount(executionOption.privateKey);
+								setExecutionOption(executionOption);
+
+								await Promise.all(
+									Object.values(taskEntryById).map(async task => {
+										const hash = await sendTransaction(wagmiConfig, {
+											to: task.request.to,
+											data: task.request.data,
+											account,
+											chainId: task.request.chainId,
+										});
+
+										onTaskSuccess(task.id, hash);
+									}),
+								);
+							} else {
+								setExecutionOption(executionOption);
+							}
+						}}
 					/>
 				</Box>
 			)}
-			{isDeployedToAllChains && (
+			{data && (
 				<CompletedOrVerify
 					shouldVerify={!!options.verify}
 					chains={chains}
@@ -231,22 +261,6 @@ const CompletedOrVerify = ({
 	contractAddress: Address;
 	forgeArtifact: ForgeArtifact;
 }) => {
-	const {broadcasts} = useBroadcastStore();
-	const [isGeneratingBroadcastArtifacts, setIsGeneratingBroadcastArtifacts] =
-		useState(true);
-
-	useEffect(() => {
-		const multichainBroadcast = broadcasts[contractAddress];
-		if (multichainBroadcast) {
-			writeMultichainBroadcast(multichainBroadcast);
-		}
-		setIsGeneratingBroadcastArtifacts(false);
-	}, [broadcasts]);
-
-	if (isGeneratingBroadcastArtifacts) {
-		return <Spinner label="Generating broadcast artifacts" />;
-	}
-
 	if (!shouldVerify) {
 		return (
 			<Box>
@@ -393,7 +407,6 @@ const DeployStatus = ({
 				initCode={initCode}
 				baseSalt={baseSalt}
 				deterministicAddress={deterministicAddress}
-				privateKey={executionOption.privateKey}
 			/>
 		);
 	}
@@ -439,60 +452,31 @@ const PrivateKeyExecution = ({
 	initCode,
 	baseSalt,
 	deterministicAddress,
-	privateKey,
 }: {
 	chain: Chain;
 	initCode: Hex;
 	baseSalt: Hex;
 	deterministicAddress: Address;
-	privateKey: Hex;
 }) => {
 	const {
-		writeContract,
-		isPending,
-		error,
+		status,
 		data: transactionHash,
-	} = useWriteContract();
-
-	const {addTransaction} = useBroadcastStore();
-
-	const {data: receipt, isLoading: isReceiptLoading} =
-		useWaitForTransactionReceipt({
-			hash: transactionHash,
+		error,
+	} = useOperation(
+		executeTransactionOperation({
 			chainId: chain.id,
-		});
+			deterministicAddress,
+			initCode,
+			baseSalt,
+		}),
+	);
 
-	const {data: transaction, isLoading: isTransactionLoading} = useTransaction({
+	const {isLoading: isReceiptLoading} = useWaitForTransactionReceipt({
 		hash: transactionHash,
 		chainId: chain.id,
 	});
 
-	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
-
-	useEffect(() => {
-		writeContract({
-			abi: createXABI,
-			account: privateKeyToAccount(privateKey),
-			address: CREATEX_ADDRESS,
-			chainId: chain.id,
-			functionName: 'deployCreate2',
-			args: [baseSalt, initCode],
-		});
-	}, []);
-
-	useEffect(() => {
-		if (receipt && transaction) {
-			addTransaction({
-				chainId: chain.id,
-				hash: transaction.hash,
-				transaction: transaction,
-				receipt: receipt,
-				contractAddress: deterministicAddress,
-			});
-		}
-	}, [receipt, transaction]);
-
-	if (isPending) {
+	if (status === 'pending') {
 		return <Spinner label="Deploying contract" />;
 	}
 
@@ -500,7 +484,7 @@ const PrivateKeyExecution = ({
 		return <Text>Error deploying contract: {error.message}</Text>;
 	}
 
-	if (isReceiptLoading || isTransactionLoading) {
+	if (isReceiptLoading) {
 		return <Spinner label="Waiting for receipt" />;
 	}
 
@@ -524,59 +508,22 @@ const ExternalSignerExecution = ({
 	baseSalt: Hex;
 	deterministicAddress: Address;
 }) => {
-	const {addTransaction} = useBroadcastStore();
-	const encodedData = encodeFunctionData({
-		abi: createXABI,
-		args: [baseSalt, initCode],
-		functionName: 'deployCreate2',
-	});
-
-	const {createTask, taskEntryById} = useTransactionTaskStore();
-
-	const taskId = createTransactionTaskId({
-		chainId: chain.id,
-		to: CREATEX_ADDRESS,
-		data: encodedData,
-	});
-
-	useEffect(() => {
-		createTask({
+	const {data: hash} = useOperation(
+		executeTransactionOperation({
 			chainId: chain.id,
-			to: CREATEX_ADDRESS,
-			data: encodedData,
-		});
-	}, []);
+			deterministicAddress,
+			initCode,
+			baseSalt,
+		}),
+	);
 
 	const {data: receipt, isLoading: isReceiptLoading} =
 		useWaitForTransactionReceipt({
-			hash: taskEntryById[taskId]?.hash,
+			hash,
 			chainId: chain.id,
 		});
 
-	const {data: transaction, isLoading: isTransactionLoading} = useTransaction({
-		hash: taskEntryById[taskId]?.hash,
-		chainId: chain.id,
-	});
-
-	useRefetchCodeOnReceipt(deterministicAddress, chain.id, receipt);
-
-	useEffect(() => {
-		if (receipt && transaction) {
-			addTransaction({
-				chainId: chain.id,
-				hash: transaction.hash,
-				transaction: transaction,
-				receipt: receipt,
-				contractAddress: deterministicAddress,
-			});
-		}
-	}, [receipt, transaction]);
-
-	if (isReceiptLoading || isTransactionLoading) {
-		return <Spinner label="Waiting for receipt" />;
-	}
-
-	if (!taskEntryById[taskId]?.hash) {
+	if (!hash) {
 		return (
 			<Box gap={1}>
 				<Spinner label="Waiting for signature..." />
@@ -590,11 +537,15 @@ const ExternalSignerExecution = ({
 		);
 	}
 
+	if (isReceiptLoading || !receipt) {
+		return <Spinner label="Waiting for receipt" />;
+	}
+
 	return (
 		<Box gap={1}>
 			<Badge color="green">Deployed</Badge>
 			<Text>Contract successfully deployed</Text>
-			<Text>{getBlockExplorerAddressLink(chain, deterministicAddress)}</Text>P
+			<Text>{getBlockExplorerAddressLink(chain, deterministicAddress)}</Text>
 		</Box>
 	);
 };

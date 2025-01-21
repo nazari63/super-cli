@@ -4,7 +4,7 @@ import crypto from 'crypto';
 
 export type TransactionTask = {
 	chainId: number;
-	to?: Address;
+	to: Address;
 	data?: Hex;
 	value?: Hex;
 };
@@ -13,7 +13,7 @@ export const createTransactionTaskId = (request: TransactionTask): string => {
 	// Create a normalized object where undefined values are explicitly null
 	const normalized = {
 		chainId: request.chainId,
-		to: request.to ? getAddress(request.to) : null,
+		to: getAddress(request.to),
 		data: request.data ?? null,
 		value: request.value ?? null,
 	};

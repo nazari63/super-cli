@@ -4,10 +4,10 @@ import {z} from 'zod';
 import {option} from 'pastel';
 import {DeployCreate2Wizard} from '@/actions/deploy-create2/wizard/DeployCreate2Wizard';
 import {fromZodError} from 'zod-validation-error';
-import {parseSuperConfigFromTOML} from '@/utils/config';
+import {parseSuperConfigFromTOML} from '@/util/config';
 
 import {DeployCreate2Command} from '@/actions/deploy-create2/DeployCreate2Command';
-import {SupportedNetwork} from '@/utils/fetchSuperchainRegistryChainList';
+import {SupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
 
 const zodDeployCreate2CommandEntrypointOptions = zodDeployCreateXCreate2Params
 	.partial()

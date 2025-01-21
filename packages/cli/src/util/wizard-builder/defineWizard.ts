@@ -1,4 +1,4 @@
-import {Prettify} from '@/utils/wizard-builder/utils';
+import {Prettify} from '@/util/wizard-builder/utils';
 import {z} from 'zod';
 
 export type WizardStep<

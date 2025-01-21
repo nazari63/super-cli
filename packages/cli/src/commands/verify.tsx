@@ -12,9 +12,9 @@ import {
 	verifyOnBlockscoutMutation,
 	verifyOnBlockscoutMutationKey,
 } from '@/actions/verify/verifyOnBlockscoutMutation';
-import {getBlockExplorerAddressLink} from '@/utils/blockExplorer';
+import {getBlockExplorerAddressLink} from '@/util/blockExplorer';
 import {useForgeArtifact} from '@/queries/forgeArtifact';
-import {ForgeArtifact} from '@/utils/forge/readForgeArtifact';
+import {ForgeArtifact} from '@/util/forge/readForgeArtifact';
 
 const zodVerifyContractCommandParams = zodVerifyContractParams;
 

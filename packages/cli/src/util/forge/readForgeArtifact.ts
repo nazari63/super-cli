@@ -1,4 +1,4 @@
-import {zodAddress, zodHash, zodHex} from '@/utils/schemas';
+import {zodAddress, zodHash, zodHex} from '@/util/schemas';
 import {Abi} from 'abitype/zod';
 import {z} from 'zod';
 import fs from 'fs';

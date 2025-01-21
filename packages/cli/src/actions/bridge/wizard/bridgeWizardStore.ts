@@ -1,8 +1,8 @@
-import {defineWizard, InferStepId} from '@/utils/wizard-builder/defineWizard';
+import {defineWizard, InferStepId} from '@/util/wizard-builder/defineWizard';
 import {z} from 'zod';
 import {formatEther} from 'viem';
-import {createWizardStore} from '@/utils/wizard-builder/createWizardStore';
-import {zodAddress} from '@/utils/schemas';
+import {createWizardStore} from '@/util/wizard-builder/createWizardStore';
+import {zodAddress} from '@/util/schemas';
 
 const bridgeWizard = defineWizard()
 	.addStep({
