@@ -33,6 +33,7 @@ import {
 	useWriteContract,
 } from 'wagmi';
 import {z} from 'zod';
+import {supersimL1} from '@eth-optimism/viem/chains';
 
 const zodBridgeParams = z.object({
 	network: zodSupportedNetwork.describe(
@@ -166,9 +167,10 @@ const BridgeInner = ({
 							chains={chains}
 							recipientAddress={recipientAddress}
 							amountPerChain={amountPerChain}
-							accountToEstimateFrom={
-								privateKey ? privateKeyToAddress(privateKey) : zeroAddress
-							}
+							accountToEstimateFrom={getAccountToEstimateFrom(
+								sourceChain,
+								privateKey,
+							)}
 						/>
 					</Box>
 				</Box>
@@ -193,6 +195,17 @@ const BridgeInner = ({
 			</Box>
 		</Box>
 	);
+};
+
+const getAccountToEstimateFrom = (chain: Chain, privateKey?: Hex) => {
+	if (privateKey) {
+		return privateKeyToAddress(privateKey);
+	}
+	if (chain.id === supersimL1.id || chain.sourceId === supersimL1.id) {
+		return `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`;
+	}
+
+	return zeroAddress;
 };
 
 const SendStatus = ({

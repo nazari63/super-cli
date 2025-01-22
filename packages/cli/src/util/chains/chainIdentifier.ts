@@ -22,6 +22,11 @@ export const sourceIdentifierByChainId = sourceChains.reduce((acc, chain) => {
 	return acc;
 }, {} as Record<number, string>);
 
+export const sourceChainByIdentifier = sourceChains.reduce((acc, chain) => {
+	acc[chain.identifier] = chain.chain;
+	return acc;
+}, {} as Record<string, Chain>);
+
 // TODO: this is error prone, update @eth-optimism/viem to export a mapping from name to identifier
 const supersimIdentifierByChainId: Record<number, string> = {
 	901: 'supersim/supersiml2a',

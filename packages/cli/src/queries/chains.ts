@@ -33,11 +33,13 @@ const toViemChain = (
 	superchainRegistryAddresses: SuperchainRegistryAddresses,
 ) => {
 	const name = chainListItem.identifier.split('/')[1] as string;
+	// @ts-expect-error - will remove this file soon anyway
 	const sourceId = chainIdByParentChainName[chainListItem.parent.chain];
 	const chainId = chainListItem.chainId;
 
 	// Not all viem chain definitions have this, so manually overriding it here
 	const parametersToAdd = {
+		// @ts-expect-error - will remove this file soon anyway
 		sourceId: chainIdByParentChainName[chainListItem.parent.chain],
 		contracts: {
 			...chainConfig.contracts,

@@ -4,6 +4,7 @@ export const zodSupportedNetwork = z.enum([
 	'mainnet',
 	'sepolia',
 	'sepolia-dev-0',
+	'supersim',
 ]);
 
 export type SupportedNetwork = z.infer<typeof zodSupportedNetwork>;
