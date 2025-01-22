@@ -3,7 +3,11 @@ import {SupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
 import {Select} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 
-const supportedNetworks: SupportedNetwork[] = ['mainnet', 'sepolia'];
+const supportedNetworks: SupportedNetwork[] = [
+	'mainnet',
+	'sepolia',
+	'supersim',
+];
 
 export const SelectNetwork = () => {
 	const {wizardState, submitSelectNetwork} = useBridgeWizardStore();

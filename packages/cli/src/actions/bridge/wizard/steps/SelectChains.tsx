@@ -1,52 +1,26 @@
 import {useBridgeWizardStore} from '@/actions/bridge/wizard/bridgeWizardStore';
-import {useSuperchainRegistryChainList} from '@/queries/superchainRegistryChainList';
-import {MultiSelect, Spinner} from '@inkjs/ui';
+import {
+	rollupChainToIdentifier,
+	sourceChainByIdentifier,
+} from '@/util/chains/chainIdentifier';
+import {rollupChains} from '@/util/chains/chains';
+import {MultiSelect} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import {useState} from 'react';
 
 export const SelectChains = () => {
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
 	const {wizardState, submitSelectChains} = useBridgeWizardStore();
 
 	if (wizardState.stepId !== 'select-chains') {
 		throw new Error('Invalid state');
 	}
 
-	const {
-		data: chains,
-		isLoading: isLoadingChains,
-		error: loadChainsError,
-	} = useSuperchainRegistryChainList();
-
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-	if (isLoadingChains) {
-		return (
-			<Box flexDirection="column">
-				<Spinner
-					label={`Loading chains from superchain registry for ${wizardState.network}...`}
-				/>
-			</Box>
-		);
-	}
-
-	if (loadChainsError || !chains) {
-		return (
-			<Box flexDirection="column">
-				<Text color="red">
-					❌ Failed to load chains from superchain registry
-				</Text>
-				<Text color="red">{loadChainsError?.toString()}</Text>
-			</Box>
-		);
-	}
-
-	if (chains.length === 0) {
-		return (
-			<Box flexDirection="column">
-				<Text color="yellow">⚠️ No chains found</Text>
-			</Box>
-		);
-	}
+	const sourceChain = sourceChainByIdentifier[wizardState.network]!;
+	const chains = rollupChains.filter(
+		chain => chain.sourceId === sourceChain.id,
+	);
 
 	return (
 		<Box flexDirection="column">
@@ -63,12 +37,10 @@ export const SelectChains = () => {
 				<Text color="gray"> to confirm)</Text>
 			</Text>
 			<MultiSelect
-				options={chains
-					.filter(chain => chain.parent.chain === wizardState.network)
-					.map(chain => ({
-						label: `${chain.name} (${chain.chainId})`,
-						value: chain.identifier.split('/')[1]!,
-					}))}
+				options={chains.map(chain => ({
+					label: `${chain.name} (${chain.id})`,
+					value: rollupChainToIdentifier(chain).split('/')[1]!,
+				}))}
 				onSubmit={chainNames => {
 					if (chainNames.length === 0) {
 						setErrorMessage('You must select at least one chain');

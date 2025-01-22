@@ -6,7 +6,6 @@ import {
 	supersimL2B,
 	supersimL2C,
 	supersimL2D,
-	supersimL2E,
 } from '@eth-optimism/viem/chains';
 import {Chain, mainnet, sepolia} from 'viem/chains';
 
@@ -27,7 +26,7 @@ export const sepoliaNetwork = {
 
 export const supersimNetwork = {
 	sourceChain: supersimL1,
-	chains: [supersimL2A, supersimL2B, supersimL2C, supersimL2D, supersimL2E],
+	chains: [supersimL2A, supersimL2B, supersimL2C, supersimL2D],
 } as const satisfies Network;
 
 // TODO: update this
