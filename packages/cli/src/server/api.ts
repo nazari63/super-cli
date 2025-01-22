@@ -7,7 +7,7 @@ import {
 } from '@/stores/transactionTaskStore';
 import {zodHash} from '@/util/schemas';
 import {z} from 'zod';
-import {queryMappingChainById} from '@/queries/chainById';
+import {chainById} from '@/util/chains/chains';
 
 export const api = new Hono();
 
@@ -28,8 +28,6 @@ api.get('/healthz', async c => {
 });
 
 api.post('/getMappingChainById', async c => {
-	const chainById = await queryMappingChainById();
-
 	return c.json({
 		chainById,
 	});

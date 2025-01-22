@@ -22,8 +22,8 @@ importers:
   packages/cli:
     dependencies:
       '@eth-optimism/viem':
-        specifier: ^0.0.11
-        version: 0.0.11(viem@2.21.41(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8))
+        specifier: ^0.1.0
+        version: 0.1.0(viem@2.21.41(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8))
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.13.7(hono@4.6.14)
@@ -1191,8 +1191,8 @@ packages:
     resolution: {integrity: sha512-zSkKow6H5Kdm0ZUQUB2kV5JIXqoG0+uH5YADhaEHswm664N9Db8dXSi0nMJpacpMf+MyyglF1vnZohpEg5yUtg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@eth-optimism/viem@0.0.11':
-    resolution: {integrity: sha512-bBBWzVev+rxq9CF3bvUii0Sni5gaId8WLGWJMerthNj0wi/RxdODBWsFB8VP1fLFcq1uGs43Xe40lePmmr8ivA==}
+  '@eth-optimism/viem@0.1.0':
+    resolution: {integrity: sha512-RlzpP5VlgMEqzdBBU1f/rEvK+QxMOjdn0Hfen0/CPjBgstaZtEX4fCHhPBh9HDIP2zhLJOTBT9fYk/dSDEsH3Q==}
     peerDependencies:
       viem: ^2.17.9
 
@@ -3914,6 +3914,7 @@ packages:
 
   libsql@0.4.7:
     resolution: {integrity: sha512-T9eIRCs6b0J1SHKYIvD8+KCJMcWZ900iZyxdnSCdqxN12Z1ijzT+jY5nrk72Jw4B0HGzms2NgpryArlJqvc3Lw==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@3.1.3:
@@ -6290,7 +6291,7 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
-  '@eth-optimism/viem@0.0.11(viem@2.21.41(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8))':
+  '@eth-optimism/viem@0.1.0(viem@2.21.41(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8))':
     dependencies:
       viem: 2.21.41(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)
 
