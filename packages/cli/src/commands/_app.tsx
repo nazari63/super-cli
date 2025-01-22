@@ -10,7 +10,7 @@ import {chainById} from '@/util/chains/chains';
 
 export const queryClient = new QueryClient();
 
-const wagmiConfig = createWagmiConfig(chainById);
+export const wagmiConfig = createWagmiConfig(chainById);
 
 const AppInner = ({children}: {children: React.ReactNode}) => {
 	return (

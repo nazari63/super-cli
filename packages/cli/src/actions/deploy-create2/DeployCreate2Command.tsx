@@ -19,10 +19,6 @@ import {ForgeArtifact} from '@/util/forge/readForgeArtifact';
 import {CREATEX_ADDRESS, createXABI} from '@/util/createx/constants';
 import {useMappingChainByIdentifier} from '@/queries/chainByIdentifier';
 import {privateKeyToAccount} from 'viem/accounts';
-import {
-	onTaskSuccess,
-	useTransactionTaskStore,
-} from '@/stores/transactionTaskStore';
 import {getBlockExplorerAddressLink} from '@/util/blockExplorer';
 import {getDeployCreate2Params} from '@/actions/deploy-create2/getDeployCreate2Params';
 import {useMutation, useQuery} from '@tanstack/react-query';
@@ -41,7 +37,7 @@ import {
 	deployCreate2,
 	executeTransactionOperation,
 } from '@/actions/deploy-create2/deployCreate2';
-import {sendTransaction} from '@wagmi/core';
+import {sendAllTransactionTasks} from '@/actions/deploy-create2/sendAllTransactionTasks';
 
 // Prepares any required data or loading state if waiting
 export const DeployCreate2Command = ({
@@ -136,6 +132,9 @@ const DeployCreate2CommandInner = ({
 				chains: chainsToDeployTo,
 				foundryArtifactPath: options.forgeArtifactPath,
 				contractArguments: options.constructorArgs?.split(',') ?? [],
+				account: options.privateKey
+					? privateKeyToAccount(options.privateKey)
+					: undefined,
 			});
 		},
 	});
@@ -215,22 +214,9 @@ const DeployCreate2CommandInner = ({
 						label={'🚀 Ready to deploy!'}
 						onSubmit={async executionOption => {
 							if (executionOption.type === 'privateKey') {
-								const taskEntryById =
-									useTransactionTaskStore.getState().taskEntryById;
-								const account = privateKeyToAccount(executionOption.privateKey);
 								setExecutionOption(executionOption);
-
-								await Promise.all(
-									Object.values(taskEntryById).map(async task => {
-										const hash = await sendTransaction(wagmiConfig, {
-											to: task.request.to,
-											data: task.request.data,
-											account,
-											chainId: task.request.chainId,
-										});
-
-										onTaskSuccess(task.id, hash);
-									}),
+								await sendAllTransactionTasks(
+									privateKeyToAccount(executionOption.privateKey),
 								);
 							} else {
 								setExecutionOption(executionOption);

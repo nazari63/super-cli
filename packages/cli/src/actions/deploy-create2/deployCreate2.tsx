@@ -8,23 +8,43 @@ import {fromFoundryArtifactPath} from '@/util/forge/foundryProject';
 
 import {runOperation, runOperationsMany} from '@/stores/operationStore';
 import {requestTransactionTask} from '@/stores/transactionTaskStore';
-import {Config, getTransaction, waitForTransactionReceipt} from '@wagmi/core';
-import {Address, Chain, encodeFunctionData, Hex} from 'viem';
+import {
+	Config,
+	getTransaction,
+	sendTransaction,
+	waitForTransactionReceipt,
+} from '@wagmi/core';
+import {Address, Chain, encodeFunctionData, Hex, PrivateKeyAccount} from 'viem';
+import {wagmiConfig} from '@/commands/_app';
 
 export const executeTransactionOperation = ({
 	chainId,
 	deterministicAddress,
 	initCode,
 	baseSalt,
+	account,
 }: {
 	chainId: number;
 	deterministicAddress: Address;
 	initCode: Hex;
 	baseSalt: Hex;
+	account?: PrivateKeyAccount;
 }) => {
 	return {
 		key: ['executeTransaction', chainId, deterministicAddress],
 		fn: async () => {
+			if (account) {
+				return await sendTransaction(wagmiConfig, {
+					to: CREATEX_ADDRESS,
+					data: encodeFunctionData({
+						abi: createXABI,
+						functionName: 'deployCreate2',
+						args: [baseSalt, initCode],
+					}),
+					account,
+					chainId,
+				});
+			}
 			return await requestTransactionTask({
 				chainId,
 				to: CREATEX_ADDRESS,
@@ -82,6 +102,7 @@ export const deployCreate2 = async ({
 	chains,
 	foundryArtifactPath,
 	contractArguments,
+	account,
 }: {
 	wagmiConfig: Config;
 	deterministicAddress: Address;
@@ -90,6 +111,7 @@ export const deployCreate2 = async ({
 	chains: Chain[];
 	foundryArtifactPath: string;
 	contractArguments: string[];
+	account?: PrivateKeyAccount;
 }) => {
 	const transactionHashes = await runOperationsMany(
 		chains.map(chain =>
@@ -98,6 +120,7 @@ export const deployCreate2 = async ({
 				deterministicAddress,
 				initCode,
 				baseSalt,
+				account,
 			}),
 		),
 	);
