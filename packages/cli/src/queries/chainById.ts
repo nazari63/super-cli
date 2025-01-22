@@ -1,7 +1,7 @@
 import {queryClient} from '@/commands/_app';
 import {queryChains} from '@/queries/chains';
+import {chainById} from '@/util/chains/chains';
 import {viemChainById} from '@/util/viemChainById';
-import {useQuery} from '@tanstack/react-query';
 import {Chain} from 'viem';
 
 const getQueryParams = () => {
@@ -26,9 +26,10 @@ export const queryMappingChainById = async () => {
 	return queryClient.fetchQuery(getQueryParams());
 };
 
+// TODO: remove this entirely
 export const useMappingChainById = () => {
-	return useQuery({
-		...getQueryParams(),
-		staleTime: Infinity, // For the duration of the CLI session, this is cached
-	});
+	return {
+		data: chainById,
+		isLoading: false,
+	};
 };

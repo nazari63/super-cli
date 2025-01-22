@@ -3,24 +3,16 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {useInput} from 'ink';
 import {DbProvider} from '@/db/dbContext';
 import {useEffect, useRef} from 'react';
-import {Spinner} from '@inkjs/ui';
-import {useMappingChainById} from '@/queries/chainById';
 import {createWagmiConfig} from '@/createWagmiConfig';
 import {WagmiProvider} from 'wagmi';
 import {startServer} from '@/server/startServer';
+import {chainById} from '@/util/chains/chains';
 
 export const queryClient = new QueryClient();
 
+const wagmiConfig = createWagmiConfig(chainById);
+
 const AppInner = ({children}: {children: React.ReactNode}) => {
-	const {data: chainById, isLoading: isChainByIdLoading} =
-		useMappingChainById();
-
-	if (isChainByIdLoading || !chainById) {
-		return <Spinner label="Loading chain config from Superchain registry..." />;
-	}
-
-	const wagmiConfig = createWagmiConfig(chainById);
-
 	return (
 		<WagmiProvider config={wagmiConfig}>
 			<DbProvider>{children}</DbProvider>

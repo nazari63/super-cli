@@ -68,9 +68,13 @@ export const DeployCreate2Command = ({
 	// Wizards = [ 'op', 'base' ]
 	// Command = [ 'op, base' ]
 	const flattenedChains = options.chains.flatMap(chain => chain.split(','));
-	const chains = flattenedChains.map(
-		chain => chainByIdentifier[`${options.network}/${chain}`]!,
-	);
+	const chains = flattenedChains.map(x => {
+		const chain = chainByIdentifier[`${options.network}/${x}`]!;
+		if (!chain) {
+			throw new Error(`Chain ${`${options.network}/${x}`} not found`);
+		}
+		return chain;
+	});
 
 	return (
 		<DeployCreate2CommandInner
