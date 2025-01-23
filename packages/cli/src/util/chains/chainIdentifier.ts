@@ -48,10 +48,5 @@ const identifierByChainId = {
 };
 
 export const rollupChainToIdentifier = (chain: Chain) => {
-	console.log(
-		'rollupChainToIdentifier',
-		chain.id,
-		identifierByChainId[chain.id],
-	);
 	return identifierByChainId[chain.id]!;
 };
