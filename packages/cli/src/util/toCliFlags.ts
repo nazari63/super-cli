@@ -4,11 +4,29 @@ export const toCliFlags = (options: Record<string, any>): string => {
 			([_, value]) => value !== '' && value !== undefined && value !== null,
 		)
 		.map(([key, value]) => {
-			// Convert camelCase to kebab-case
-			const flag = key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-			// Handle arrays by joining with commas
-			const flagValue = Array.isArray(value) ? value.join(',') : value;
-			return `--${flag} ${flagValue}`;
+			return flagToString(key, value);
 		})
-		.join(' ');
+		.join(' ')
+		.replace(/\n/g, ' ');
+};
+
+const flagToString = (key: string, value: any) => {
+	const flag = toKebabCase(key);
+
+	if (Array.isArray(value)) {
+		return `--${flag} ${value.join(',')}`;
+	}
+
+	if (typeof value === 'boolean') {
+		if (value) {
+			return `--${flag}`;
+		}
+		return '';
+	}
+
+	return `--${flag} ${value.toString().replace('\n', ' ')}`;
+};
+
+const toKebabCase = (str: string) => {
+	return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
 };

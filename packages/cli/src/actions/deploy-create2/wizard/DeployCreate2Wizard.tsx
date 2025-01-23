@@ -14,6 +14,7 @@ import {ShouldVerifyContract} from '@/actions/deploy-create2/wizard/steps/Should
 import {getArtifactPathForContract} from '@/util/forge/foundryProject';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 import {DeployCreate2Command} from '@/actions/deploy-create2/DeployCreate2Command';
+import {toCliFlags} from '@/util/toCliFlags';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
 
@@ -100,7 +101,11 @@ const WizardProgress = () => {
 	);
 };
 
-export const DeployCreate2Wizard = () => {
+export const DeployCreate2Wizard = ({
+	isPrepareMode,
+}: {
+	isPrepareMode?: boolean;
+}) => {
 	const {wizardState} = useDeployCreate2WizardStore();
 
 	useSaveWizardProgress('deployCreate2', wizardState, ['completed']);
@@ -119,6 +124,17 @@ export const DeployCreate2Wizard = () => {
 			network: wizardState.network,
 			verify: wizardState.shouldVerifyContract,
 		};
+
+		if (isPrepareMode) {
+			console.log(`sup deploy create2 ${toCliFlags(options)}`);
+
+			// TODO: hacky way to quit until we remove pastel
+			setTimeout(() => {
+				process.exit(0);
+			}, 1);
+
+			return null;
+		}
 
 		return <DeployCreate2Command options={options} />;
 	}
