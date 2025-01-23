@@ -9,14 +9,34 @@ import {useUserContext} from '@/queries/userContext';
 import {actionDescriptionByWizardId} from '@/models/userContext';
 import {useBridgeWizardStore} from '@/actions/bridge/wizard/bridgeWizardStore';
 import {useDeployCreate2WizardStore} from '@/actions/deploy-create2/wizard/deployCreate2WizardStore';
+import {z} from 'zod';
+import {option} from 'pastel';
 
-const options = [
+const actions = [
 	{label: '🚀 Deploy a contract', value: 'deploy'},
 	{label: '🌉 Bridge assets', value: 'bridge'},
 	// {label: '✅ Verify a contract', value: 'verify'},
 ];
 
-export default function DefaultEntrypoint() {
+const zodOptions = z.object({
+	prepare: z
+		.boolean()
+		.optional()
+		.describe(
+			option({
+				description: 'Print the command without executing it',
+				alias: 'p',
+			}),
+		),
+});
+
+export const options = zodOptions;
+
+export default function DefaultEntrypoint({
+	options,
+}: {
+	options: z.infer<typeof zodOptions>;
+}) {
 	const [selectedOption, setSelectedOption] = useState<
 		'bridge' | 'deploy' | 'verify' | 'continue' | null
 	>(null);
@@ -35,9 +55,9 @@ export default function DefaultEntrypoint() {
 					label: `🔄 Pick up where you left off: ${actionDescriptionByWizardId[lastWizardId]}`,
 					value: 'continue',
 				},
-				...options,
+				...actions,
 		  ]
-		: options;
+		: actions;
 
 	if (!selectedOption) {
 		return (
@@ -45,7 +65,15 @@ export default function DefaultEntrypoint() {
 				<Gradient name="passion">
 					<BigText text="SUP" font="3d" />
 				</Gradient>
-				<Box marginBottom={1}>
+				<Box marginBottom={1} flexDirection="column" gap={1}>
+					{options.prepare && (
+						<Box>
+							<Text>
+								<Text>Prepare mode:</Text> Command will be displayed but not
+								executed
+							</Text>
+						</Box>
+					)}
 					<Text bold>
 						Sup, what would you like to do on the Superchain today? ✨
 					</Text>
@@ -78,9 +106,9 @@ export default function DefaultEntrypoint() {
 	}
 
 	if (selectedOption === 'deploy') {
-		return <DeployCreate2Wizard />;
+		return <DeployCreate2Wizard isPrepareMode={options.prepare} />;
 	} else if (selectedOption === 'bridge') {
-		return <BridgeWizard />;
+		return <BridgeWizard isPrepareMode={options.prepare} />;
 	}
 	return null;
 }

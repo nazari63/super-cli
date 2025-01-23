@@ -10,6 +10,7 @@ import {SelectNetwork} from '@/actions/bridge/wizard/steps/SelectNetwork';
 import BridgeEntrypoint from '@/commands/bridge';
 import {useSaveWizardProgress} from '@/hooks/useSaveWizardProgress';
 import {SupportedNetwork} from '@/util/fetchSuperchainRegistryChainList';
+import {toCliFlags} from '@/util/toCliFlags';
 import {Box, Text} from 'ink';
 
 type StepStatus = 'done' | 'current' | 'upcoming';
@@ -74,16 +75,8 @@ const WizardProgressForStep = ({stepId}: {stepId: BridgeWizardStepId}) => {
 };
 
 const WizardProgress = () => {
-	const {steps, wizardState} = useBridgeWizardStore();
-	if (wizardState.stepId === 'completed') {
-		const options = {
-			network: wizardState.network as SupportedNetwork,
-			chains: wizardState.chains,
-			amount: wizardState.amount,
-			recipient: wizardState.recipient,
-		};
-		return <BridgeEntrypoint options={options} />;
-	}
+	const {steps} = useBridgeWizardStore();
+
 	return (
 		<Box flexDirection="column">
 			{steps
@@ -95,7 +88,7 @@ const WizardProgress = () => {
 	);
 };
 
-export const BridgeWizard = () => {
+export const BridgeWizard = ({isPrepareMode}: {isPrepareMode?: boolean}) => {
 	const {wizardState} = useBridgeWizardStore();
 
 	// TODO: update before alpha release, remove private key step entirely from wizard
@@ -105,6 +98,28 @@ export const BridgeWizard = () => {
 	]);
 
 	const stepId = wizardState.stepId;
+
+	if (wizardState.stepId === 'completed') {
+		const options = {
+			network: wizardState.network as SupportedNetwork,
+			chains: wizardState.chains,
+			amount: wizardState.amount,
+			recipient: wizardState.recipient,
+		};
+
+		if (isPrepareMode) {
+			console.log(`sup bridge ${toCliFlags(options)}`);
+
+			// TODO: hacky way to quit until we remove pastel
+			setTimeout(() => {
+				process.exit(0);
+			}, 1);
+
+			return null;
+		}
+
+		return <BridgeEntrypoint options={options} />;
+	}
 
 	return (
 		<Box flexDirection="column" gap={1}>
