@@ -50,3 +50,4 @@ BASE_RPC_URL=...
 ### ❓ Is `sup` a replacement for `foundry`?
 
 Nope, `foundry` is great! `sup` is meant to be a lightweight add-on tool to help with the annoyances of multichain development. It works with your existing `foundry` project, and expects you to use `foundry` to build contracts. It even emits the same broadcast artifacts when you deploy contracts.
+This project is a demonstration of blockchain technology and smart contract integration.
